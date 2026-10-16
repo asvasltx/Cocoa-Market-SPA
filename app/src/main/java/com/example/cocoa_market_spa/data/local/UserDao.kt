@@ -9,7 +9,7 @@ import androidx.room.Query
 
 interface UserDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun registerUser(user: User): Long // registro usuario
+    suspend fun registerUser(user: User) // registro usuario
 
     @Query("SELECT * FROM users WHERE email = :email LIMIT 1")
     suspend fun getUserByEmail(email: String): User? // busca usuario por correo
