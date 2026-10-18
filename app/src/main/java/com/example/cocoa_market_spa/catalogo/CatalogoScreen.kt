@@ -1,6 +1,7 @@
+
 package com.example.cocoa_market_spa.catalogo
 
-
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,77 +15,115 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.cocoa_market_spa.R
 
 @Composable
-fun CatalogoScreen(){
+fun CatalogoScreen() {
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+
         Text(
-            text = "cocoa market",
+            text = "Cocoa Market",
+            style = MaterialTheme.typography.titleLarge
+        )
+
+        Text(
+            text = "Catálogo de productos",
             style = MaterialTheme.typography.titleMedium
         )
-        Text(
-            text = "Catalogo de producto",
-            style = MaterialTheme.typography.titleMedium
-        )
+
         Spacer(modifier = Modifier.height(16.dp))
+
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ){
-        Producto(
-            nombre = "Arroz Tucapel 1KG",
-            precio = "1.290$"
-        )
-        Producto(
-            nombre = "Leche Chocolate Colun 200ML",
-            precio = "1.490"
-        )
+        ) {
+
+            Producto(
+                nombre = "Arroz Tucapel 1 kg",
+                precio = "$1.290",
+                imagen = R.drawable.arroztucapel,
+                modifier = Modifier.weight(1f)
+            )
+
+            Producto(
+                nombre = "Leche Chocolate Colun 200 ml",
+                precio = "$1.490",
+                imagen = R.drawable.lechechocolate,
+                modifier = Modifier.weight(1f)
+            )
         }
+
         Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Producto(
-                    nombre = "Aceite Maravilla 1LT",
-                    precio = "2.0000$"
-                )
-                Producto(
-                    nombre = "Pasta de dientes Pesodent",
-                    precio = "1.000$"
-                )
-            }
+
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            Producto(
+                nombre = "Aceite Maravilla 1 L",
+                precio = "$2.000",
+                imagen = R.drawable.aceite,
+                modifier = Modifier.weight(1f)
+            )
+
+            Producto(
+                nombre = "Pasta de dientes Pepsodent",
+                precio = "$1.000",
+                imagen = R.drawable.pastadedientes,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
+}
 
 @Composable
 fun Producto(
     nombre: String,
-    precio: String
-){
+    precio: String,
+    imagen: Int,
+    modifier: Modifier = Modifier
+) {
+
     Card(
-        modifier = Modifier.height(120.dp)
-    ){
+        modifier = modifier
+    ) {
+
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.Center
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
         ) {
+
+            Image(
+                painter = painterResource(id = imagen),
+                contentDescription = nombre,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = nombre,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyMedium
             )
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = precio,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
