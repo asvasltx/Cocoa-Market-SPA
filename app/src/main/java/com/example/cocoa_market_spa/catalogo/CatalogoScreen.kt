@@ -14,19 +14,48 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.cocoa_market_spa.R
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.PaddingValues
 
 @Composable
 fun CatalogoScreen() {
-
+    var categoriaSeleccionada by remember {
+        mutableStateOf("Todos")
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 8.dp)
+        ) {
+            items(
+                listOf("Todos", "Abarrotes", "Bebidas", "Higiene")
+            ) { categoria ->
+                Button(
+                    onClick = {
+                        categoriaSeleccionada = categoria
+                    }
+                ) {
+                    Text(text = categoria)
+                }
+
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "Cocoa Market",
@@ -40,52 +69,63 @@ fun CatalogoScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            if (categoriaSeleccionada == "Todos" ||
+                categoriaSeleccionada == "Abarrotes"
+            ) {
+                Producto(
+                    nombre = "Arroz Tucapel 1 kg",
+                    precio = "$1.290",
+                    imagen = R.drawable.arroztucapel,
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
-            Producto(
-                nombre = "Arroz Tucapel 1 kg",
-                precio = "$1.290",
-                imagen = R.drawable.arroztucapel,
-                modifier = Modifier.weight(1f)
-            )
-
-            Producto(
-                nombre = "Leche Chocolate Colun 200 ml",
-                precio = "$1.490",
-                imagen = R.drawable.lechechocolate,
-                modifier = Modifier.weight(1f)
-            )
+            if (categoriaSeleccionada == "Todos" ||
+                categoriaSeleccionada == "Bebidas"
+            ) {
+                Producto(
+                    nombre = "Leche Chocolate Colun 200 ml",
+                    precio = "$1.490",
+                    imagen = R.drawable.lechechocolate,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            if (categoriaSeleccionada == "Todos" ||
+                categoriaSeleccionada == "Abarrotes"
+            ) {
+                Producto(
+                    nombre = "Aceite Maravilla 1 L",
+                    precio = "$2.000",
+                    imagen = R.drawable.aceite,
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
-            Producto(
-                nombre = "Aceite Maravilla 1 L",
-                precio = "$2.000",
-                imagen = R.drawable.aceite,
-                modifier = Modifier.weight(1f)
-            )
-
-            Producto(
-                nombre = "Pasta de dientes Pepsodent",
-                precio = "$1.000",
-                imagen = R.drawable.pastadedientes,
-                modifier = Modifier.weight(1f)
-            )
+            if (categoriaSeleccionada == "Todos" ||
+                categoriaSeleccionada == "Higiene"
+            ) {
+                Producto(
+                    nombre = "Pasta de dientes Pepsodent",
+                    precio = "$1.000",
+                    imagen = R.drawable.pastadedientes,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
-
 @Composable
 fun Producto(
     nombre: String,
