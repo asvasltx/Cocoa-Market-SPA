@@ -1,6 +1,8 @@
 
 package com.example.cocoa_market_spa.catalogo
 
+import android.content.ClipData
+import android.media.RouteListingPreference
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -29,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.cocoa_market_spa.R
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyColumn
 
 @Composable
 fun CatalogoScreen(
@@ -57,7 +60,7 @@ fun CatalogoScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botones de categorías
+        // Desplazamiento horizontal
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -82,79 +85,80 @@ fun CatalogoScreen(
         // transición animada para los productos seleccionados como muestra
         AnimatedContent(
             targetState = categoriaSeleccionada,
-            label = "AnimacionDeCatalogo"
+            label = "AnimacionDeCatalogo",
+            modifier = Modifier.weight(1f),
         ) { categoriaActual ->
 
-            Column {
-
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-
-                    if (
-                        categoriaActual == "Todos" ||
-                        categoriaActual == "Abarrotes"
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Producto(
-                            nombre = "Arroz Tucapel 1 kg",
-                            precio = "$1.290",
-                            imagen = R.drawable.arroztucapel,
-                            modifier = Modifier.weight(1f),
-                            onClick = {onProductoClick(1)}
-                        )
-                    }
 
-                    if (
-                        categoriaActual == "Todos" ||
-                        categoriaActual == "Bebidas"
-                    ) {
-                        Producto(
-                            nombre = "Leche Chocolate Colun 200 ml",
-                            precio = "$1.490",
-                            imagen = R.drawable.lechechocolate,
-                            modifier = Modifier.weight(1f),
-                            onClick = {onProductoClick(2)}
-                        )
-                    }
-                }
+                        if (
+                            categoriaActual == "Todos" ||
+                            categoriaActual == "Abarrotes"
+                        ) {
+                            Producto(
+                                nombre = "Arroz Tucapel 1 kg",
+                                precio = "$1.290",
+                                imagen = R.drawable.arroztucapel,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onProductoClick(1) }
+                            )
+                        }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-
-                    if (
-                        categoriaActual == "Todos" ||
-                        categoriaActual == "Abarrotes"
-                    ) {
-                        Producto(
-                            nombre = "Aceite Maravilla 1 L",
-                            precio = "$2.000",
-                            imagen = R.drawable.aceite,
-                            modifier = Modifier.weight(1f),
-                            onClick = {onProductoClick(3)}
-                        )
-                    }
-
-                    if (
-                        categoriaActual == "Todos" ||
-                        categoriaActual == "Higiene"
-                    ) {
-                        Producto(
-                            nombre = "Pasta de dientes Pepsodent",
-                            precio = "$1.000",
-                            imagen = R.drawable.pastadedientes,
-                            modifier = Modifier.weight(1f),
-                            onClick = {onProductoClick(4)}
-                        )
+                        if (
+                            categoriaActual == "Todos" ||
+                            categoriaActual == "Bebidas"
+                        ) {
+                            Producto(
+                                nombre = "Leche Chocolate Colun 200 ml",
+                                precio = "$1.490",
+                                imagen = R.drawable.lechechocolate,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onProductoClick(2) }
+                            )
+                        }
                     }
                 }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
 
+                        if (
+                            categoriaActual == "Todos" ||
+                            categoriaActual == "Abarrotes"
+                        ) {
+                            Producto(
+                                nombre = "Aceite Maravilla 1 L",
+                                precio = "$2.000",
+                                imagen = R.drawable.aceite,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onProductoClick(3) }
+                            )
+                        }
+
+                        if (
+                            categoriaActual == "Todos" ||
+                            categoriaActual == "Higiene"
+                        ) {
+                            Producto(
+                                nombre = "Pasta de dientes Pepsodent",
+                                precio = "$1.000",
+                                imagen = R.drawable.pastadedientes,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onProductoClick(4) }
+                            )
+                        }
+                    }
+                }
             }
 
         }
