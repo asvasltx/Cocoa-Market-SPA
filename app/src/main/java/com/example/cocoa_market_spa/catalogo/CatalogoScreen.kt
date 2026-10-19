@@ -1,8 +1,6 @@
 
 package com.example.cocoa_market_spa.catalogo
 
-import android.content.ClipData
-import android.media.RouteListingPreference
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -30,8 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.cocoa_market_spa.R
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.Alignment
 
 @Composable
 fun CatalogoScreen(
@@ -47,10 +50,44 @@ fun CatalogoScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.LocationOn,
+                contentDescription = "Ubicaion del local"
+            )
+
+            Text(
+                text = "Ubicacion del local",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = "Cocoa Market",
             style = MaterialTheme.typography.titleLarge
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = {
+                Text("Que te interesa?")
+            },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_busqueda),
+                    contentDescription = "Buscar",
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            singleLine = true,
+            readOnly = true
         )
 
         Text(
