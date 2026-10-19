@@ -5,6 +5,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.cocoa_market_spa.R
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.Modifier
 
 @Composable
 fun CatalogoNavigation() {
@@ -15,15 +20,33 @@ fun CatalogoNavigation() {
         navController = navController,
         startDestination = "catalogo"
     ) {
+        //composable para la barra inferior
 
         composable("catalogo") {
-            CatalogoScreen(
-                onProductoClick = { id ->
-                    navController.navigate("detalle/$id")
+
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                bottomBar = {
+                    BarraInferior()
                 }
-            )
+            ) { innerPadding ->
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+
+                    CatalogoScreen(
+                        onProductoClick = { id ->
+                            navController.navigate("detalle/$id")
+                        }
+                    )
+                }
+            }
         }
 
+        //Para ver el detalle de los productos
         composable("detalle/{id}") { backStackEntry ->
 
             val id = backStackEntry.arguments
