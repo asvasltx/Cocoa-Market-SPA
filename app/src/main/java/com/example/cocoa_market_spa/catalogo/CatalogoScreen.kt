@@ -3,6 +3,7 @@ package com.example.cocoa_market_spa.catalogo
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,9 +28,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.cocoa_market_spa.R
+import androidx.compose.foundation.clickable
 
 @Composable
-fun CatalogoScreen() {
+fun CatalogoScreen(
+    onProductoClick: (Int) -> Unit
+) {
 
     var categoriaSeleccionada by remember {
         mutableStateOf("Todos")
@@ -97,7 +101,8 @@ fun CatalogoScreen() {
                             nombre = "Arroz Tucapel 1 kg",
                             precio = "$1.290",
                             imagen = R.drawable.arroztucapel,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            onClick = {onProductoClick(1)}
                         )
                     }
 
@@ -109,7 +114,8 @@ fun CatalogoScreen() {
                             nombre = "Leche Chocolate Colun 200 ml",
                             precio = "$1.490",
                             imagen = R.drawable.lechechocolate,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            onClick = {onProductoClick(2)}
                         )
                     }
                 }
@@ -130,7 +136,8 @@ fun CatalogoScreen() {
                             nombre = "Aceite Maravilla 1 L",
                             precio = "$2.000",
                             imagen = R.drawable.aceite,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            onClick = {onProductoClick(3)}
                         )
                     }
 
@@ -142,7 +149,8 @@ fun CatalogoScreen() {
                             nombre = "Pasta de dientes Pepsodent",
                             precio = "$1.000",
                             imagen = R.drawable.pastadedientes,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            onClick = {onProductoClick(4)}
                         )
                     }
                 }
@@ -161,11 +169,14 @@ fun Producto(
     nombre: String,
     precio: String,
     imagen: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
 
     Card(
-        modifier = modifier
+        modifier = modifier.clickable{
+            onClick()
+        }
     ) {
         Column(
             modifier = Modifier
