@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import com.example.cocoa_market_spa.catalogo.CatalogoNavigation
 import com.example.cocoa_market_spa.catalogo.CatalogoScreen
 import com.example.cocoa_market_spa.ui.theme.CocoamarketSPATheme
 
@@ -25,7 +26,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
-                        CatalogoScreen()
+                        CatalogoNavigation()
                     }
                 }
             }
