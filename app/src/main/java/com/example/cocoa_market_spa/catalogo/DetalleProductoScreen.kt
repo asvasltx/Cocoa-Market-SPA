@@ -141,6 +141,17 @@ fun DetalleProductoScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
+            onClick = {//aqui quedara pendiente para conectar al carrito
+                 },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = stock > 0
+        ) {
+            Text(text = "Agregar al carrito")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
             onClick = onVolver,
             modifier = Modifier.fillMaxWidth()
         ) {
