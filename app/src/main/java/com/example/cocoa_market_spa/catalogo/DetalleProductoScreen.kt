@@ -1,6 +1,11 @@
 package com.example.cocoa_market_spa.catalogo
 
-import android.R
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import android.util.Log
+import android.widget.Toast
 
 @Composable
 fun DetalleProductoScreen(
@@ -34,6 +41,8 @@ fun DetalleProductoScreen(
 )   { var cantidad by remember{
     mutableStateOf(1)
     }
+
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -142,7 +151,8 @@ fun DetalleProductoScreen(
 
         Button(
             onClick = {//aqui quedara pendiente para conectar al carrito
-                 },
+                vibrar(context)//Aqui se le pone vibracion al apretar el boton
+            },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = stock > 0
         ) {
@@ -160,5 +170,34 @@ fun DetalleProductoScreen(
             )
         }
 
+    }
+}
+
+fun vibrar(context: Context){
+    val vibrator: Vibrator
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
+
+        val manager = context.getSystemService(
+            Context.VIBRATOR_MANAGER_SERVICE
+        )as VibratorManager
+
+        vibrator = manager.defaultVibrator
+    }else{
+        @Suppress("DEPRECATION")
+        vibrator = context.getSystemService(
+            Context.VIBRATOR_SERVICE
+        ) as Vibrator
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+        vibrator.vibrate(
+            VibrationEffect.createOneShot(
+                150,
+                VibrationEffect.DEFAULT_AMPLITUDE
+            )
+        )
+    } else  {
+        @Suppress("DEPRECATION")
+        vibrator.vibrate(150)
     }
 }
