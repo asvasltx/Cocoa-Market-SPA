@@ -1,6 +1,8 @@
 
 package com.example.cocoa_market_spa.catalogo
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -37,6 +39,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun CatalogoScreen(
@@ -47,6 +50,8 @@ fun CatalogoScreen(
         mutableStateOf("Todos")
     }
 
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -55,13 +60,25 @@ fun CatalogoScreen(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
+            Icon( // Aqui es para el entrar a la aplicacion de maps y ver la unicacion del local
+                modifier = Modifier.clickable{
+                    val direccion = "Av. Las Condes 9280, Local 4, Las Condes, Santiago, Chile"
+                    val enlace = "https://www.google.com/maps/search/?api=1&query=" +
+                            Uri.encode(direccion)
+
+                    val intent = Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse(enlace)
+                    )
+
+                    context.startActivity(intent)
+                },
                 imageVector = Icons.Default.LocationOn,
-                contentDescription = "Ubicaion del local"
+                contentDescription = "Ubicanos :D"
             )
 
             Text(
-                text = "Ubicacion del local",
+                text = "Ubicanos :D",
                 style = MaterialTheme.typography.bodySmall
             )
         }
