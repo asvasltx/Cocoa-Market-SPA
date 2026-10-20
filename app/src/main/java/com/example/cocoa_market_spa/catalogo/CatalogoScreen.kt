@@ -35,6 +35,8 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CardDefaults
 
 @Composable
 fun CatalogoScreen(
@@ -217,12 +219,16 @@ fun Producto(
     Card(
         modifier = modifier.clickable{
             onClick()
-        }
+        },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp)
+                .padding(12.dp)
         ) {
 
             Image(
@@ -230,21 +236,22 @@ fun Producto(
                 contentDescription = nombre,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(90.dp)
+                    .height(120.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = nombre,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.titleSmall
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = precio,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
