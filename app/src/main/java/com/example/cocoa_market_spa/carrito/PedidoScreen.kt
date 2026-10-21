@@ -25,7 +25,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
 @Composable
-fun PedidoScreen() {
+fun PedidoScreen(
+    onVolvercarrito:()-> Unit
+) {
 
     val pedidos = listOf(
         "Pedido N° 1" to 4780,
@@ -48,6 +50,15 @@ fun PedidoScreen() {
                 text = "Mis pedidos",
                 style = MaterialTheme.typography.titleLarge
             )
+
+            Button(
+                onClick = onVolvercarrito
+            ) {
+                Text("Volver al carrito")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
 
             Spacer(modifier = Modifier.height(16.dp))
 

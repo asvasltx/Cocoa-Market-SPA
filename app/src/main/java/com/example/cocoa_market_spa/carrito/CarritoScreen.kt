@@ -32,7 +32,10 @@ import androidx.compose.ui.platform.LocalContext
 
 
 @Composable
-fun CarritoScreen() {
+fun CarritoScreen(
+    onNavigateToPedidos: () -> Unit
+) {
+
 
 
     val productos = listOf(
@@ -125,6 +128,7 @@ fun CarritoScreen() {
                         "Pedido confirmado",
                         Toast.LENGTH_SHORT
                     ).show()
+                    onNavigateToPedidos()
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
