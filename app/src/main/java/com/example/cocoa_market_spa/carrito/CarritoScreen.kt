@@ -140,8 +140,10 @@ fun CarritoScreen(
                         Toast.LENGTH_SHORT
                     ).show()
                     onNavigateToPedidos()
+
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = productosViewModel.isNotEmpty()
             ) {
                 Text(text = "Confirmar pedido")
             }
