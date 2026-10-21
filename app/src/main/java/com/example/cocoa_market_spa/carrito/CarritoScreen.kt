@@ -28,38 +28,27 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
-
-
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cocoa_market_spa.model.CarritoModel
+import com.example.cocoa_market_spa.viewmodel.CarritoViewModel
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
 
 @Composable
 fun CarritoScreen(
-    onNavigateToPedidos: () -> Unit
+    onNavigateToPedidos: () -> Unit,
+    carritoViewModel: CarritoViewModel = viewModel()
 ) {
+    val productosViewModel = carritoViewModel.productos.value
 
-
-
-    val productos = listOf(
-        "Arroz Tucapel 1 kg" to 1290,
-        "Leche Chocolate Colun 200 ml" to 1490,
-        "Aceite Maravilla 1 L" to 2000
-    )
-
-
-    val cantidades = remember {
-        mutableStateMapOf(
-            "Arroz Tucapel 1 kg" to 1,
-            "Leche Chocolate Colun 200 ml" to 1,
-            "Aceite Maravilla 1 L" to 1
-        )
+    LaunchedEffect(Unit) {
+        carritoViewModel.cargarProductosPrueba()
     }
 
-
-    val total = productos.sumOf { producto ->
-        producto.second * (cantidades[producto.first] ?: 1)
-    }
+    val total = carritoViewModel.calcularTotal()
 
     val context = LocalContext.current
-
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -86,29 +75,51 @@ fun CarritoScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(productos) { producto ->
 
-                    val nombre = producto.first
 
-                    ProductoCarrito(
-                        producto = nombre,
-                        precio = producto.second,
-                        cantidad = cantidades[nombre] ?: 1,
-                        onAumentar = {
-                            cantidades[nombre] = (cantidades[nombre] ?: 1) + 1
-                        },
-                        onDisminuir = {
-                            val cantidadActual = cantidades[nombre] ?: 1
-                            if (cantidadActual > 1) {
-                                cantidades[nombre] = cantidadActual - 1
-                            }
-                        }
+            if (productosViewModel.isEmpty()) {
+
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Tu carrito está vacío",
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
+
+            } else {
+
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(productosViewModel) { producto ->
+
+                        ProductoCarrito(
+                            producto = producto.nombre,
+                            precio = producto.precio,
+                            cantidad = producto.cantidad,
+                            onAumentar = {
+                                carritoViewModel.aumentarCantidad(
+                                    producto.productoId
+                                )
+                            },
+                            onDisminuir = {
+                                carritoViewModel.disminuirCantidad(
+                                    producto.productoId
+                                )
+                            },
+                            onEliminar = {
+                                carritoViewModel.eliminarProducto(
+                                    producto.productoId
+                                )
+                            }
+                        )
+                    }
+                }
             }
+
 
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -136,54 +147,55 @@ fun CarritoScreen(
             }
 
 
-
         }
 
-        }
     }
+}
 
 
 
-@Composable
-fun ProductoCarrito(
-    producto: String,
-    precio: Int,
-    cantidad: Int,
-    onAumentar: () -> Unit,
-    onDisminuir: () -> Unit
-) {
 
-
-    Card(
-        modifier = Modifier.fillMaxWidth()
+    @Composable
+    fun ProductoCarrito(
+        producto: String,
+        precio: Int,
+        cantidad: Int,
+        onAumentar: () -> Unit,
+        onDisminuir: () -> Unit,
+        onEliminar: () -> Unit
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+
+
+        Card(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = producto,
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Precio: $$precio",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Text(
-                text = "Subtotal: $${precio * cantidad}",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
+                Text(
+                    text = producto,
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Precio: $$precio",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Text(
+                    text = "Subtotal: $${precio * cantidad}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
 
                     Button(
                         onClick = onDisminuir,
@@ -193,17 +205,25 @@ fun ProductoCarrito(
                     }
 
 
-                Text(text = "$cantidad")
+                    Text(text = "$cantidad")
 
+
+                    Button(
+                        onClick = onAumentar
+                    ) {
+                        Text("+")
+                    }
+
+                }
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
-                    onClick = onAumentar
+                    onClick = onEliminar
                 ) {
-                    Text("+")
+                    Text(text = "Eliminar producto")
                 }
-
             }
         }
     }
-}
+
 
