@@ -44,7 +44,10 @@ fun CarritoNavigation() {
                 EntregaPagoScreen(
                     onConfirmarPedido = {
                         totalPedido=carritoViewModel.calcularTotal()
-                        pedidoViewModel.agregarPedido(totalPedido)
+                        pedidoViewModel.agregarPedido(
+                            total = totalPedido,
+                            productos = carritoViewModel.productos.value
+                        )
                         navController.navigate("pedido_confirmado")
                     },
                     onVolverCarrito = {

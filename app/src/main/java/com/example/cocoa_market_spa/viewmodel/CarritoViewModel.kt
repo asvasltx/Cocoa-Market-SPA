@@ -40,9 +40,28 @@ class CarritoViewModel : ViewModel() {
     }
 
 
+
     fun agregarProducto(producto: CarritoModel) {
-        productos.value = productos.value + producto
+
+        val existente = productos.value.find {
+            it.productoId == producto.productoId
+        }
+
+        if (existente != null) {
+
+            productos.value = productos.value.map {
+                if (it.productoId == producto.productoId) {
+                    it.copy(cantidad = it.cantidad + producto.cantidad)
+                } else {
+                    it
+                }
+            }
+
+        } else {
+            productos.value = productos.value + producto
+        }
     }
+
 
     fun aumentarCantidad(productoId: Int) {
         productos.value = productos.value.map { producto ->
@@ -71,10 +90,15 @@ class CarritoViewModel : ViewModel() {
             it.productoId != productoId
         }
     }
+    fun vaciarCarrito() {
+        productos.value = emptyList()
+    }
 
     fun calcularTotal(): Int {
         return productos.value.sumOf {
             it.precio * it.cantidad
         }
     }
+
+
 }

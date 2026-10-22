@@ -37,6 +37,7 @@ fun DetalleProductoScreen(
     stock: Int,
     imagen: Int,
     onVolver: () -> Unit,
+    onAgregarCarrito: (Int) -> Unit
 
 )   { var cantidad by remember{
     mutableStateOf(1)
@@ -150,8 +151,9 @@ fun DetalleProductoScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = {//aqui quedara pendiente para conectar al carrito
-                vibrar(context)//Aqui se le pone vibracion al apretar el boton
+            onClick = {
+                vibrar(context)
+                onAgregarCarrito(cantidad)
             },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = stock > 0

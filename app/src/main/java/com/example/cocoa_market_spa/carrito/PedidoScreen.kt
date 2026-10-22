@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cocoa_market_spa.model.CarritoModel
 import com.example.cocoa_market_spa.viewmodel.PedidoViewModel
 
 @Composable
@@ -74,8 +75,9 @@ fun PedidoScreen(
             ) {
                 items(pedidos) { pedido ->
                     TarjetaPedido(
-                        numero = pedido.first,
-                        total = pedido.second
+                        numero = pedido.numero,
+                        total = pedido.total,
+                        productos = pedido.productos
                     )
                 }
             }
@@ -90,7 +92,8 @@ fun PedidoScreen(
 @Composable
 fun TarjetaPedido(
     numero: String,
-    total: Int
+    total: Int,
+    productos: List<CarritoModel>
 ) {
     var mostrarDetalle by remember {
         mutableStateOf(false)
@@ -139,9 +142,25 @@ fun TarjetaPedido(
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                Text(
-                    text = "Aquí aparecerán los productos comprados"
-                )
+
+                productos.forEach { producto ->
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = producto.nombre,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    Text(
+                        text = "Cantidad: ${producto.cantidad}"
+                    )
+
+                    Text(
+                        text = "Subtotal: $${producto.precio * producto.cantidad}"
+                    )
+                }
+
             }
 
         }
