@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.cocoa_market_spa.ui.auth.AuthViewModel
 import com.example.cocoa_market_spa.ui.auth.LoginScreen
 import com.example.cocoa_market_spa.ui.auth.RegisterScreen
+import com.example.cocoa_market_spa.catalogo.CatalogoNavigation
 
 @Composable
 fun AppNavigation() {
@@ -51,9 +52,7 @@ fun AppNavigation() {
         }
 
         composable("home") {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("¡Bienvenido al Catálogo de Cocoa Market!")
-            }
+            CatalogoNavigation()
         }
     }
 }
