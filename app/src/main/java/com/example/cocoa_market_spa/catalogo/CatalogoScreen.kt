@@ -40,10 +40,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.platform.LocalContext
+import com.example.cocoa_market_spa.data.local.entity.ProductoEntity
 
 @Composable
 fun CatalogoScreen(
-    onProductoClick: (Int) -> Unit
+    productos: List<ProductoEntity>,
+    onProductoClick: (Int)-> Unit
 ) {
 
     var categoriaSeleccionada by remember {
@@ -145,83 +147,31 @@ fun CatalogoScreen(
             modifier = Modifier.weight(1f),
         ) { categoriaActual ->
 
+          val productosFiltrados = if (categoriaActual == "Todos"){
+              productos
+          }else{
+              productos.filter { producto->
+                  producto.categoria == categoriaActual
+              }
+          }
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-
-                        if (
-                            categoriaActual == "Todos" ||
-                            categoriaActual == "Abarrotes"
-                        ) {
-                            Producto(
-                                nombre = "Arroz Tucapel 1 kg",
-                                precio = "$1.290",
-                                imagen = R.drawable.arroztucapel,
-                                modifier = Modifier.weight(1f),
-                                onClick = { onProductoClick(1) }
-                            )
+                items(productosFiltrados) { producto ->
+                    Producto(
+                        nombre = producto.nombre,
+                        precio = "$${producto.precio}",
+                        imagen = producto.imagen,
+                        onClick = {
+                            onProductoClick(producto.id)
                         }
-
-                        if (
-                            categoriaActual == "Todos" ||
-                            categoriaActual == "Bebidas"
-                        ) {
-                            Producto(
-                                nombre = "Leche Chocolate Colun 200 ml",
-                                precio = "$1.490",
-                                imagen = R.drawable.lechechocolate,
-                                modifier = Modifier.weight(1f),
-                                onClick = { onProductoClick(2) }
-                            )
-                        }
-                    }
-                }
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-
-                        if (
-                            categoriaActual == "Todos" ||
-                            categoriaActual == "Abarrotes"
-                        ) {
-                            Producto(
-                                nombre = "Aceite Maravilla 1 L",
-                                precio = "$2.000",
-                                imagen = R.drawable.aceite,
-                                modifier = Modifier.weight(1f),
-                                onClick = { onProductoClick(3) }
-                            )
-                        }
-
-                        if (
-                            categoriaActual == "Todos" ||
-                            categoriaActual == "Higiene"
-                        ) {
-                            Producto(
-                                nombre = "Pasta de dientes Pepsodent",
-                                precio = "$1.000",
-                                imagen = R.drawable.pastadedientes,
-                                modifier = Modifier.weight(1f),
-                                onClick = { onProductoClick(4) }
-                            )
-                        }
-                    }
+                    )
                 }
             }
-
         }
-
+        }
     }
-
-}
 
 
 @Composable

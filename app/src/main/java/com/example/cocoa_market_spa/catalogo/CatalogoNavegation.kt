@@ -9,12 +9,32 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import com.example.cocoa_market_spa.catalogo.viewmodel.CatalogoViewModel
+import com.example.cocoa_market_spa.data.local.AppDatabase
+import androidx.compose.material3.Text
 
 @Composable
 fun CatalogoNavigation() {
 
     val navController = rememberNavController()
+
+    val context = LocalContext.current
+
+    val database = remember {
+        AppDatabase.getDatabase(context)
+    }
+
+    val catalogoViewModel = remember {
+        CatalogoViewModel(database.ProductoDao())
+    }
+
+    LaunchedEffect(Unit) {
+        catalogoViewModel.cargarProductos()
+    }
 
     NavHost(
         navController = navController,
@@ -38,6 +58,7 @@ fun CatalogoNavigation() {
                 ) {
 
                     CatalogoScreen(
+                        productos = catalogoViewModel.productos.value,
                         onProductoClick = { id ->
                             navController.navigate("detalle/$id")
                         }
@@ -53,47 +74,29 @@ fun CatalogoNavigation() {
                 ?.getString("id")
                 ?.toIntOrNull()
 
-            when (id) {
-
-                1 -> DetalleProductoScreen(
-                    nombre = "Arroz Tucapel 1 kg",
-                    precio = 1290,
-                    descripcion = "Arroz de 1 kg para preparar diferentes comidas.",
-                    stock = 15,
-                    imagen = R.drawable.arroztucapel,
-                    onVolver = { navController.popBackStack() }
-                )
-
-                2 -> DetalleProductoScreen(
-                    nombre = "Leche Chocolate Colun 200 ml",
-                    precio = 1490,
-                    descripcion = "Leche con sabor a chocolate en envase de 200 ml.",
-                    stock = 20,
-                    imagen = R.drawable.lechechocolate,
-                    onVolver = { navController.popBackStack() }
-                )
-
-                3 -> DetalleProductoScreen(
-                    nombre = "Aceite Maravilla 1 L",
-                    precio = 2000,
-                    descripcion = "Aceite de maravilla de 1 litro para cocinar.",
-                    stock = 12,
-                    imagen = R.drawable.aceite,
-                    onVolver = { navController.popBackStack() }
-                )
-
-                4 -> DetalleProductoScreen(
-                    nombre = "Pasta de dientes Pepsodent",
-                    precio = 1000,
-                    descripcion = "Pasta dental para la higiene bucal diaria.",
-                    stock = 18,
-                    imagen = R.drawable.pastadedientes,
-                    onVolver = { navController.popBackStack() }
-                )
-
-                else -> {
-                    navController.popBackStack()
+            LaunchedEffect(id) {
+                if (id != null) {
+                    catalogoViewModel.cargarProductoPorId(id)
                 }
+            }
+
+            val producto = catalogoViewModel.productoSeleccionado.value
+
+            if (producto != null && producto.id == id) {
+
+                DetalleProductoScreen(
+                    nombre = producto.nombre,
+                    precio = producto.precio,
+                    descripcion = producto.descripcion,
+                    stock = producto.stock,
+                    imagen = producto.imagen,
+                    onVolver = {
+                        navController.popBackStack()
+                    }
+                )
+
+            } else {
+                Text("Cargando producto...")
             }
         }
     }
