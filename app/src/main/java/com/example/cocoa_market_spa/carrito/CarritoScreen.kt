@@ -31,7 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cocoa_market_spa.model.CarritoModel
 import com.example.cocoa_market_spa.viewmodel.CarritoViewModel
-import androidx.compose.runtime.LaunchedEffect
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 
@@ -42,9 +42,7 @@ fun CarritoScreen(
 ) {
     val productosViewModel = carritoViewModel.productos.value
 
-    LaunchedEffect(Unit) {
-        carritoViewModel.cargarProductosPrueba()
-    }
+
 
     val total = carritoViewModel.calcularTotal()
 
@@ -136,7 +134,7 @@ fun CarritoScreen(
                 onClick = {
                     Toast.makeText(
                         context,
-                        "Pedido confirmado",
+                        "continuar al pago",
                         Toast.LENGTH_SHORT
                     ).show()
                     onNavigateToPedidos()

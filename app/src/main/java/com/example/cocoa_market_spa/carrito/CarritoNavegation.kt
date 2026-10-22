@@ -12,18 +12,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.example.cocoa_market_spa.viewmodel.CarritoViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.example.cocoa_market_spa.data.local.AppDatabase
 
 @Composable
 fun CarritoNavigation() {
 
+    val navController = rememberNavController()
+    val context = LocalContext.current
+    val pedidoDao = AppDatabase.getDatabase(context).PedidoDao()
 
-    @Composable
-    fun CarritoNavigation() {
+    val pedidoViewModel: PedidoViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return PedidoViewModel(pedidoDao) as T
+            }
+        }
+    )
+    val carritoViewModel: CarritoViewModel = viewModel()
 
-        val navController = rememberNavController()
-        val pedidoViewModel: PedidoViewModel = viewModel()
-        val carritoViewModel: CarritoViewModel = viewModel()
         var totalPedido by remember { mutableStateOf(0) }
 
         NavHost(
@@ -77,6 +87,6 @@ fun CarritoNavigation() {
                 )
             }
         }
-    }
+
 
 }

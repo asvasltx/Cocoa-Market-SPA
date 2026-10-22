@@ -26,18 +26,31 @@ import com.example.cocoa_market_spa.viewmodel.PedidoViewModel
 import com.example.cocoa_market_spa.carrito.PedidoScreen
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+
 
 
 @Composable
 fun CatalogoNavigation() {
 
     val navController = rememberNavController()
+    val context = LocalContext.current
     val carritoViewModel: CarritoViewModel = viewModel()
-    val pedidoViewModel: PedidoViewModel = viewModel()
+
+    val pedidoDao = AppDatabase.getDatabase(context).PedidoDao()
+
+    val pedidoViewModel: PedidoViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return PedidoViewModel(pedidoDao) as T
+            }
+        }
+    )
     var totalPedido by remember { mutableStateOf(0) }
 
 
-    val context = LocalContext.current
 
     val database = remember {
         AppDatabase.getDatabase(context)
