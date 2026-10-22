@@ -54,17 +54,12 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    val room_version = "2.8.4"
+    implementation("androidx.navigation:navigation-compose:2.8.0")
 
-    // Navegación en Jetpack Compose
-    implementation("androidx.navigation:navigation-compose:2.8.3")
-
-    // ViewModel para Compose (MVVM)
+    implementation("androidx.room:room-runtime:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
+    implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
-
-    // Base de datos local (Room)
-    val roomVersion = "2.7.2"
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
-
 }
