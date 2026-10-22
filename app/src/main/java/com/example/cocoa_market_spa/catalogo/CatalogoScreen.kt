@@ -125,7 +125,7 @@ fun CatalogoScreen(
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
             items(
-                listOf("Todos", "Abarrotes", "Bebidas", "Higiene")
+                listOf("Todos", "Abarrotes", "Bebidas", "Higiene", "Lacteos")
             ) { categoria ->
 
                 Button(
@@ -154,6 +154,11 @@ fun CatalogoScreen(
                   producto.categoria == categoriaActual
               }
           }
+
+            if (productosFiltrados.isEmpty()) {
+                Text("No hay productos disponibles en esta categoría")
+            }
+
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
