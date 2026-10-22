@@ -23,17 +23,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cocoa_market_spa.viewmodel.PedidoViewModel
 
 @Composable
 fun PedidoScreen(
-    onVolvercarrito:()-> Unit
+    onVolvercarrito:()-> Unit,
+    pedidoViewModel: PedidoViewModel= viewModel()
 ) {
 
-    val pedidos = listOf(
-        "Pedido N° 1" to 4780,
-        "Pedido N° 2" to 3290,
-        "Pedido N° 3" to 2000
-    )
+    val pedidos = pedidoViewModel.pedidos.value
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
