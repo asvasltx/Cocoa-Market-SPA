@@ -8,21 +8,28 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.cocoa_market_spa.data.local.entity.ProductoDao
 import com.example.cocoa_market_spa.data.local.entity.ProductoEntity
+import com.example.cocoa_market_spa.model.CarritoModel
+import com.example.cocoa_market_spa.data.local.entity.PedidoEntity
+import com.example.cocoa_market_spa.data.local.entity.DetallePedidoEntity
+import com.example.cocoa_market_spa.data.local.entity.PedidoDao
 
-@Database(entities = [User::class, ProductoEntity::class],
-    version = 2,
+@Database(entities = [User::class, ProductoEntity::class,CarritoModel::class,PedidoEntity::class,
+    DetallePedidoEntity::class],
+    version = 3,
     exportSchema = false)
 
-abstract class AppDatabase : RoomDatabase(){
+abstract class AppDatabase : RoomDatabase() {
     abstract fun UserDao(): UserDao
 
     abstract fun ProductoDao(): ProductoDao
+
+    abstract fun PedidoDao(): PedidoDao
 
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        private val Migration_1_2 = object : Migration(1,2){
+        private val Migration_1_2 = object : Migration(1, 2) {
 
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
@@ -41,6 +48,41 @@ abstract class AppDatabase : RoomDatabase(){
             }
         }
 
+
+        private val Migration_2_3 = object : Migration(2, 3) {
+
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+            CREATE TABLE IF NOT EXISTS carrito (
+                productoId INTEGER NOT NULL PRIMARY KEY,
+                nombre TEXT NOT NULL,
+                precio INTEGER NOT NULL,
+                cantidad INTEGER NOT NULL,
+                imagen INTEGER NOT NULL
+            )
+            """.trimIndent()
+                )
+
+
+
+        db.execSQL(
+        """
+            CREATE TABLE IF NOT EXISTS detalle_pedidos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                pedidoId INTEGER NOT NULL,
+                productoId INTEGER NOT NULL,
+                nombre TEXT NOT NULL,
+                precio INTEGER NOT NULL,
+                cantidad INTEGER NOT NULL,
+                imagen INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -48,7 +90,7 @@ abstract class AppDatabase : RoomDatabase(){
                     AppDatabase::class.java,
                     "cocoa_market_db"
                 )
-                    .addMigrations(Migration_1_2)
+                    .addMigrations(Migration_1_2,Migration_2_3)
                     .build()
                 INSTANCE = instance
                 instance

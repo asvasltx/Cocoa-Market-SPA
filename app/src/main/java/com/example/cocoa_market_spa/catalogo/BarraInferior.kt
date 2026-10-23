@@ -16,9 +16,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.size
 import com.example.cocoa_market_spa.R
+import androidx.compose.foundation.clickable
 
 @Composable
-fun BarraInferior(){
+fun BarraInferior(
+    onInicio: () -> Unit = {},
+    onCarrito: () -> Unit = {},
+    onPedidos: () -> Unit = {}
+){
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -49,7 +54,9 @@ fun BarraInferior(){
 
             //Columna del carrito
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                .weight(1f)
+                .clickable { onCarrito() },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
@@ -66,7 +73,9 @@ fun BarraInferior(){
 
             //Columna de pedidos
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                .weight(1f)
+                .clickable { onPedidos() },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
