@@ -149,7 +149,8 @@ fun CatalogoNavigation() {
                     navController.navigate("pedidos")
                 },
                 onVolverCatalogo = {
-                    navController.navigate("catalogo")
+                    navController.navigate("carrito")
+
                 }
             )
         }
