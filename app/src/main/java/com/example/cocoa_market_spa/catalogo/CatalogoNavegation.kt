@@ -28,11 +28,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-
+import android.media.AudioManager
+import android.media.ToneGenerator
+import android.media.RingtoneManager
 
 
 @Composable
-fun CatalogoNavigation() {
+fun CatalogoNavigation(nombreUsuario: String) {
 
     val navController = rememberNavController()
     val context = LocalContext.current
@@ -84,6 +86,9 @@ fun CatalogoNavigation() {
                         },
                         onPedidos = {
                             navController.navigate("pedidos")
+                        },
+                        onCuenta = {
+                            navController.navigate("Cuenta")
                         }
                     )
                 }
@@ -107,15 +112,40 @@ fun CatalogoNavigation() {
 
 
         composable("carrito") {
-            CarritoScreen(
-                onNavigateToPedidos = {
-                    navController.navigate("entrega_pago")
-                },
-                onVolverCatalogo = {
-                    navController.navigate("catalogo")
-                },
-                carritoViewModel = carritoViewModel
-            )
+            Scaffold(
+                bottomBar = {
+                    BarraInferior(
+                        onInicio = {
+                            navController.navigate("catalogo")
+                        },
+                        onCarrito = {
+                            navController.navigate("carrito")
+                        },
+                        onPedidos = {
+                            navController.navigate("pedidos")
+                        },
+                        onCuenta = {
+                            navController.navigate("cuenta")
+                        }
+                    )
+                }
+            ) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    CarritoScreen(
+                        onNavigateToPedidos = {
+                            navController.navigate("entrega_pago")
+                        },
+                        onVolverCatalogo = {
+                            navController.navigate("catalogo")
+                        },
+                        carritoViewModel = carritoViewModel
+                    )
+                }
+            }
         }
 
 
@@ -134,6 +164,13 @@ fun CatalogoNavigation() {
 
                         carritoViewModel.vaciarCarrito()
 
+                        // Para el sonido al confirmar pedido
+                        val sonido = RingtoneManager.getRingtone(
+                            context,
+                            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                        )
+                        sonido?.play()
+
                         navController.navigate("pedido_confirmado")
                     }
                 },
@@ -142,8 +179,6 @@ fun CatalogoNavigation() {
                 }
             )
         }
-
-
 
         composable("pedido_confirmado") {
             PedidoConfirmadoScreen(
@@ -160,12 +195,68 @@ fun CatalogoNavigation() {
 
 
         composable("pedidos") {
-            PedidoScreen(
-                onVolvercarrito = {
-                    navController.navigate("carrito")
-                },
-                pedidoViewModel = pedidoViewModel
-            )
+            Scaffold(
+                bottomBar = {
+                    BarraInferior(
+                        onInicio = {
+                            navController.navigate("catalogo")
+                        },
+                        onCarrito = {
+                            navController.navigate("carrito")
+                        },
+                        onPedidos = {
+                            navController.navigate("pedidos")
+                        },
+                        onCuenta = {
+                            navController.navigate("cuenta")
+                        }
+                    )
+                }
+            ) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    PedidoScreen(
+                        onVolvercarrito = {
+                            navController.navigate("carrito")
+                        },
+                        pedidoViewModel = pedidoViewModel
+                    )
+                }
+            }
+        }
+
+        composable("cuenta") {
+            Scaffold(
+                bottomBar = {
+                    BarraInferior(
+                        onInicio = {
+                            navController.navigate("catalogo")
+                        },
+                        onCarrito = {
+                            navController.navigate("carrito")
+                        },
+                        onPedidos = {
+                            navController.navigate("pedidos")
+                        },
+                        onCuenta = {
+                            navController.navigate("cuenta")
+                        }
+                    )
+                }
+            ) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    MiCuentaScreen(
+                        nombreUsuario = nombreUsuario
+                    )
+                }
+            }
         }
 
 

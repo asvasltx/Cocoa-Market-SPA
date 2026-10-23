@@ -22,7 +22,8 @@ import androidx.compose.foundation.clickable
 fun BarraInferior(
     onInicio: () -> Unit = {},
     onCarrito: () -> Unit = {},
-    onPedidos: () -> Unit = {}
+    onPedidos: () -> Unit = {},
+    onCuenta: () -> Unit = {}
 ){
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -35,7 +36,9 @@ fun BarraInferior(
         ){
             //Columna del inicio
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onInicio() },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
@@ -93,7 +96,9 @@ fun BarraInferior(
 
             //Columna para la cuenta
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onCuenta() },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
