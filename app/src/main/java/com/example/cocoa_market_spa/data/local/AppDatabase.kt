@@ -64,6 +64,17 @@ abstract class AppDatabase : RoomDatabase() {
             """.trimIndent()
                 )
 
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS pedidos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    numero TEXT NOT NULL,
+                    total INTEGER NOT NULL,
+                    estado TEXT NOT NULL
+            )   
+            """.trimIndent()
+                )
+
 
 
         db.execSQL(
