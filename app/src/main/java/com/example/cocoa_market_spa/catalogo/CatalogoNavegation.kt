@@ -111,6 +111,9 @@ fun CatalogoNavigation() {
                 onNavigateToPedidos = {
                     navController.navigate("entrega_pago")
                 },
+                onVolverCatalogo = {
+                    navController.navigate("catalogo")
+                },
                 carritoViewModel = carritoViewModel
             )
         }

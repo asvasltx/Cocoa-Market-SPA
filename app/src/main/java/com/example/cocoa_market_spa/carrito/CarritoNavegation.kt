@@ -46,6 +46,9 @@ fun CarritoNavigation() {
                     onNavigateToPedidos = {
                         navController.navigate("entrega_pago")
                     },
+                    onVolverCatalogo = {
+                        navController.popBackStack()
+                    },
                     carritoViewModel=carritoViewModel
                 )
             }

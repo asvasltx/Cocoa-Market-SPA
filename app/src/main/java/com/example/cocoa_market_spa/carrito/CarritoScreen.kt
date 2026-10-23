@@ -37,7 +37,7 @@ import androidx.compose.ui.Alignment
 
 @Composable
 fun CarritoScreen(
-    onNavigateToPedidos: () -> Unit,
+    onNavigateToPedidos: () -> Unit,onVolverCatalogo: () -> Unit,
     carritoViewModel: CarritoViewModel = viewModel()
 ) {
     val productosViewModel = carritoViewModel.productos.value
@@ -59,6 +59,11 @@ fun CarritoScreen(
                 .padding(16.dp)
         ) {
 
+            Button(
+                onClick = onVolverCatalogo
+            ) {
+                Text("← Volver al catálogo")
+            }
             Text(
                 text = "Mi carrito",
                 style = MaterialTheme.typography.titleLarge
