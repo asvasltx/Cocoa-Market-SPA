@@ -34,7 +34,7 @@ fun CarritoNavigation() {
     )
     val carritoViewModel: CarritoViewModel = viewModel()
 
-        var totalPedido by remember { mutableStateOf(0) }
+    var totalPedido by remember { mutableStateOf(0) }
 
         NavHost(
             navController = navController,

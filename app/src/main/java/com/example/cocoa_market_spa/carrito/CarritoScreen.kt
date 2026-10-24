@@ -42,8 +42,6 @@ fun CarritoScreen(
 ) {
     val productosViewModel = carritoViewModel.productos.value
 
-
-
     val total = carritoViewModel.calcularTotal()
 
     val context = LocalContext.current
@@ -76,9 +74,6 @@ fun CarritoScreen(
 
 
             Spacer(modifier = Modifier.height(16.dp))
-
-
-
 
             if (productosViewModel.isEmpty()) {
 
