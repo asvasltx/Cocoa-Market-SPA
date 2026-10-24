@@ -1,6 +1,7 @@
 package com.example.cocoa_market_spa.ui.auth
 
 import android.app.Application
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cocoa_market_spa.data.local.AppDatabase
@@ -9,7 +10,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
+
+    var nombreUsuario = mutableStateOf("")
+    private set
 
     private val userDao = AppDatabase.getDatabase(application).UserDao()
 
@@ -51,6 +56,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val user = userDao.login(email, pass)
             if (user != null) {
+                nombreUsuario.value = user.nombre
                 _errorMessage.value = null
                 onSuccess()
             } else {

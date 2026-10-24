@@ -52,7 +52,9 @@ fun AppNavigation() {
         }
 
         composable("home") {
-            CatalogoNavigation()
+            CatalogoNavigation(
+                nombreUsuario = authViewModel.nombreUsuario.value
+            )
         }
     }
 }
