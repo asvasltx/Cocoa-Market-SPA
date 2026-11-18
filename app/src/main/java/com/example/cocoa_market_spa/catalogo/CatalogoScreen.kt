@@ -15,43 +15,50 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.cocoa_market_spa.R
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CardDefaults
-import androidx.compose.ui.platform.LocalContext
 import com.example.cocoa_market_spa.data.local.entity.ProductoEntity
 
 @Composable
 fun CatalogoScreen(
     productos: List<ProductoEntity>,
-    onProductoClick: (Int)-> Unit
+    onProductoClick: (Int) -> Unit
 ) {
 
+    // Guarda la categoria seleccionada
     var categoriaSeleccionada by remember {
         mutableStateOf("Todos")
     }
 
+    // NUEVO: guarda el texto escrito en el buscador
+    var busqueda by remember {
+        mutableStateOf("")
+    }
+
+    // Permite abrir Google Maps desde Android
     val context = LocalContext.current
 
     Column(
@@ -59,14 +66,21 @@ fun CatalogoScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
+
+        // Ubicacion del minimarket
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon( // Aqui es para el entrar a la aplicacion de maps y ver la unicacion del local
-                modifier = Modifier.clickable{
-                    val direccion = "Av. Las Condes 9280, Local 4, Las Condes, Santiago, Chile"
-                    val enlace = "https://www.google.com/maps/search/?api=1&query=" +
-                            Uri.encode(direccion)
+
+            Icon(
+                modifier = Modifier.clickable {
+
+                    val direccion =
+                        "Av. Las Condes 9280, Local 4, Las Condes, Santiago, Chile"
+
+                    val enlace =
+                        "https://www.google.com/maps/search/?api=1&query=" +
+                                Uri.encode(direccion)
 
                     val intent = Intent(
                         Intent.ACTION_VIEW,
@@ -84,8 +98,10 @@ fun CatalogoScreen(
                 style = MaterialTheme.typography.bodySmall
             )
         }
+
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Nombre de la aplicacion
         Text(
             text = "Cocoa Market",
             style = MaterialTheme.typography.titleLarge
@@ -93,22 +109,26 @@ fun CatalogoScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // NUEVO: barra de busqueda funcional
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = busqueda,
+            onValueChange = {
+                busqueda = it
+            },
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text("Que te interesa?")
             },
             leadingIcon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_busqueda),
+                    painter = painterResource(
+                        id = R.drawable.ic_busqueda
+                    ),
                     contentDescription = "Buscar",
                     modifier = Modifier.size(20.dp)
                 )
             },
-            singleLine = true,
-            readOnly = true
+            singleLine = true
         )
 
         Text(
@@ -118,14 +138,21 @@ fun CatalogoScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Desplazamiento horizontal
+        // Categorias horizontales del catalogo
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
+
             items(
-                listOf("Todos", "Abarrotes", "Bebidas", "Higiene", "Lacteos")
+                listOf(
+                    "Todos",
+                    "Abarrotes",
+                    "Bebidas",
+                    "Higiene",
+                    "Lacteos"
+                )
             ) { categoria ->
 
                 Button(
@@ -140,45 +167,64 @@ fun CatalogoScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // transición animada para los productos seleccionados como muestra
+        // Mantiene la animacion al cambiar de categoria
         AnimatedContent(
             targetState = categoriaSeleccionada,
             label = "AnimacionDeCatalogo",
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f)
         ) { categoriaActual ->
 
-          val productosFiltrados = if (categoriaActual == "Todos"){
-              productos
-          }else{
-              productos.filter { producto->
-                  producto.categoria == categoriaActual
-              }
-          }
+            // NUEVO: filtra por categoria y por nombre
+            val productosFiltrados = productos.filter { producto ->
 
-            if (productosFiltrados.isEmpty()) {
-                Text("No hay productos disponibles en esta categoría")
+                // Comprueba la categoria seleccionada
+                val coincideCategoria =
+                    categoriaActual == "Todos" ||
+                            producto.categoria == categoriaActual
+
+                // Busca productos sin distinguir mayusculas
+                val coincideBusqueda = producto.nombre.contains(
+                    busqueda.trim(),
+                    ignoreCase = true
+                )
+
+                // Deben cumplirse ambas condiciones
+                coincideCategoria && coincideBusqueda
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(productosFiltrados) { producto ->
-                    Producto(
-                        nombre = producto.nombre,
-                        precio = "$${producto.precio}",
-                        imagen = producto.imagen,
-                        onClick = {
-                            onProductoClick(producto.id)
-                        }
-                    )
+            // Mensaje si no se encuentran productos
+            if (productosFiltrados.isEmpty()) {
+
+                Text(
+                    "No hay productos que coincidan con la busqueda"
+                )
+
+            } else {
+
+                // Lista de los productos encontrados
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+
+                    items(productosFiltrados) { producto ->
+
+                        Producto(
+                            nombre = producto.nombre,
+                            precio = "$${producto.precio}",
+                            imagen = producto.imagen,
+                            onClick = {
+                                onProductoClick(producto.id)
+                            }
+                        )
+                    }
                 }
             }
         }
-        }
     }
+}
 
-
+// Tarjeta que muestra cada producto
 @Composable
 fun Producto(
     nombre: String,
@@ -189,7 +235,7 @@ fun Producto(
 ) {
 
     Card(
-        modifier = modifier.clickable{
+        modifier = modifier.clickable {
             onClick()
         },
         shape = RoundedCornerShape(12.dp),
@@ -197,12 +243,14 @@ fun Producto(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
 
+            // Imagen del producto
             Image(
                 painter = painterResource(id = imagen),
                 contentDescription = nombre,
@@ -213,6 +261,7 @@ fun Producto(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Nombre del producto
             Text(
                 text = nombre,
                 style = MaterialTheme.typography.titleSmall
@@ -220,6 +269,7 @@ fun Producto(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Precio del producto
             Text(
                 text = precio,
                 style = MaterialTheme.typography.titleMedium,
