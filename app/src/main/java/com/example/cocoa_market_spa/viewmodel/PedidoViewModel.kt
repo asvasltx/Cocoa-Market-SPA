@@ -17,23 +17,100 @@ class PedidoViewModel(
     private val database: AppDatabase
 ) : ViewModel() {
 
-    // Acceso a los pedidos y productos locales
+    // Acceso a las tablas de pedidos y productos
     private val pedidoDao = database.PedidoDao()
     private val productoDao = database.ProductoDao()
 
-    // Lista de pedidos durante la sesion
+    // Pedidos que mostrara la pantalla
     var pedidos = mutableStateOf<List<PedidoModel>>(emptyList())
         private set
 
-    // Evita registrar el mismo pedido dos veces
+    // Controla cuando se registra una compra
     var guardandoPedido = mutableStateOf(false)
         private set
 
-    // Mensaje que se muestra si ocurre un error
+    // Mensaje de error al registrar un pedido
     var errorPedido = mutableStateOf("")
         private set
 
-    // Registra una compra despues de validar sus datos
+    // Indica cuando se consulta el historial
+    var cargandoPedidos = mutableStateOf(false)
+        private set
+
+    // Mensaje de error del historial
+    var errorCarga = mutableStateOf("")
+        private set
+
+    // NUEVO: recupera los pedidos guardados en SQLite
+    fun cargarPedidos() {
+
+        viewModelScope.launch {
+
+            cargandoPedidos.value = true
+            errorCarga.value = ""
+
+            try {
+
+                // Consulta todos los pedidos registrados
+                val pedidosGuardados = pedidoDao
+                    .obtenerPedidos()
+                    .sortedByDescending { it.id }
+
+                val listaPedidos = mutableListOf<PedidoModel>()
+
+                // Recupera los productos de cada pedido
+                for (pedido in pedidosGuardados) {
+
+                    val detalles = pedidoDao.obtenerDetalles(
+                        pedido.id
+                    )
+
+                    val productosPedido = detalles.map { detalle ->
+
+                        CarritoModel(
+                            productoId = detalle.productoId,
+                            nombre = detalle.nombre,
+                            precio = detalle.precio,
+                            cantidad = detalle.cantidad,
+                            imagen = detalle.imagen
+                        )
+                    }
+
+                    // Conserva datos de entrega y pago
+                    // si el pedido aun existe en memoria
+                    val pedidoAnterior = pedidos.value.find {
+                        it.numero == pedido.numero
+                    }
+
+                    listaPedidos.add(
+                        PedidoModel(
+                            numero = pedido.numero,
+                            total = pedido.total,
+                            productos = productosPedido,
+                            estado = pedido.estado,
+                            tipoEntrega = pedidoAnterior?.tipoEntrega ?: "",
+                            direccion = pedidoAnterior?.direccion ?: "",
+                            metodoPago = pedidoAnterior?.metodoPago ?: ""
+                        )
+                    )
+                }
+
+                // Actualiza el historial de la pantalla
+                pedidos.value = listaPedidos
+
+            } catch (e: Exception) {
+
+                errorCarga.value =
+                    "No se pudo cargar el historial de pedidos."
+
+            } finally {
+
+                cargandoPedidos.value = false
+            }
+        }
+    }
+
+    // Guarda el pedido despues de validar los datos
     fun agregarPedido(
         total: Int,
         productos: List<CarritoModel>,
@@ -43,7 +120,7 @@ class PedidoViewModel(
         onGuardado: () -> Unit
     ) {
 
-        // Evita confirmar mientras otro guardado esta en curso
+        // Impide registrar dos pedidos al mismo tiempo
         if (guardandoPedido.value) return
 
         if (productos.isEmpty()) {
@@ -51,6 +128,7 @@ class PedidoViewModel(
             return
         }
 
+        // Valida la direccion cuando hay despacho
         if (tipoEntrega == "Domicilio" &&
             direccion.trim().length < 8
         ) {
@@ -58,7 +136,6 @@ class PedidoViewModel(
             return
         }
 
-        // Crea una copia de los productos seleccionados
         val productosConfirmados = productos.map {
             it.copy()
         }
@@ -70,12 +147,11 @@ class PedidoViewModel(
 
             try {
 
-                // Identificador para el pedido de prueba
+                // Numero unico para identificar la compra
                 val numero = "CM-" +
                         UUID.randomUUID().toString().take(8).uppercase()
 
-                // Ejecuta todo como una sola transaccion
-                // Si falla una operacion, Room revierte los cambios
+                // Guarda todas las operaciones juntas
                 database.withTransaction {
 
                     var totalActual = 0L
@@ -83,16 +159,16 @@ class PedidoViewModel(
                     val detalles =
                         mutableListOf<DetallePedidoEntity>()
 
-                    // Comprueba cada producto del carrito
                     for (item in productosConfirmados) {
 
+                        // Consulta el precio y stock actual
                         val actual = productoDao.obtenerPorId(
                             item.productoId
                         ) ?: throw IllegalStateException(
                             "Un producto ya no existe."
                         )
 
-                        // Comprueba que exista stock suficiente
+                        // Comprueba que exista stock
                         if (item.cantidad <= 0 ||
                             item.cantidad > actual.stock
                         ) {
@@ -101,7 +177,7 @@ class PedidoViewModel(
                             )
                         }
 
-                        // Calcula el total usando el precio actual
+                        // Calcula el precio real del pedido
                         totalActual +=
                             actual.precio.toLong() * item.cantidad
 
@@ -117,7 +193,7 @@ class PedidoViewModel(
                         )
                     }
 
-                    // No acepta totales con precios antiguos
+                    // Evita confirmar con precios desactualizados
                     if (totalActual != total.toLong()) {
                         throw IllegalStateException(
                             "Cambio el precio de un producto. " +
@@ -125,7 +201,7 @@ class PedidoViewModel(
                         )
                     }
 
-                    // Guarda primero el pedido
+                    // Registra el pedido
                     val pedidoId = pedidoDao.guardarPedido(
                         PedidoEntity(
                             numero = numero,
@@ -134,7 +210,7 @@ class PedidoViewModel(
                         )
                     )
 
-                    // Guarda los detalles y descuenta el stock
+                    // Guarda detalles y descuenta stock
                     for (detalle in detalles) {
 
                         pedidoDao.guardarDetalle(
@@ -157,7 +233,7 @@ class PedidoViewModel(
                     }
                 }
 
-                // Actualiza los pedidos visibles en la aplicacion
+                // Agrega el pedido a la lista actual
                 pedidos.value = pedidos.value + PedidoModel(
                     numero = numero,
                     total = total,
@@ -168,12 +244,11 @@ class PedidoViewModel(
                     metodoPago = metodoPago
                 )
 
-                // Avisa a la navegacion que se guardo correctamente
+                // Notifica que el pedido se guardo
                 onGuardado()
 
             } catch (e: Exception) {
 
-                // Si falla, muestra el error y conserva el carrito
                 errorPedido.value = e.message
                     ?: "No se pudo guardar el pedido."
 

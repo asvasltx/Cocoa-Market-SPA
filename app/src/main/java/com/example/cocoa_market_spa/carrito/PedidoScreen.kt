@@ -1,39 +1,44 @@
+
 package com.example.cocoa_market_spa.carrito
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-
-import androidx.compose.material3.Button
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cocoa_market_spa.model.CarritoModel
 import com.example.cocoa_market_spa.viewmodel.PedidoViewModel
 
 @Composable
 fun PedidoScreen(
-    onVolvercarrito:()-> Unit,
-    pedidoViewModel: PedidoViewModel= viewModel()
+    onVolvercarrito: () -> Unit,
+    pedidoViewModel: PedidoViewModel
 ) {
 
+    // Obtiene los pedidos del ViewModel
     val pedidos = pedidoViewModel.pedidos.value
+
+    // NUEVO: consulta los pedidos al abrir la pantalla
+    LaunchedEffect(Unit) {
+        pedidoViewModel.cargarPedidos()
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -59,42 +64,66 @@ fun PedidoScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Muestra un indicador mientras consulta SQLite
+            if (pedidoViewModel.cargandoPedidos.value) {
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Text("Cargando pedidos...")
 
-            Text(
-                text = "Aquí aparecerán tus pedidos realizados",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            } else if (
+                pedidoViewModel.errorCarga.value.isNotEmpty()
             ) {
-                items(pedidos) { pedido ->
-                    TarjetaPedido(
-                        numero = pedido.numero,
-                        total = pedido.total,
-                        productos = pedido.productos
-                    )
+
+                // Muestra el problema y permite reintentar
+                Text(
+                    text = pedidoViewModel.errorCarga.value,
+                    color = MaterialTheme.colorScheme.error
+                )
+
+                Button(
+                    onClick = {
+                        pedidoViewModel.cargarPedidos()
+                    }
+                ) {
+                    Text("Reintentar")
+                }
+
+            } else if (pedidos.isEmpty()) {
+
+                // Mensaje cuando no existen pedidos
+                Text("Todavia no tienes pedidos registrados.")
+
+            } else {
+
+                // Lista con las compras registradas
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+
+                    items(pedidos) { pedido ->
+
+                        TarjetaPedido(
+                            numero = pedido.numero,
+                            total = pedido.total,
+                            estado = pedido.estado,
+                            productos = pedido.productos
+                        )
+                    }
                 }
             }
-
         }
     }
-
 }
 
-
-
+// Tarjeta que muestra la informacion de un pedido
 @Composable
 fun TarjetaPedido(
     numero: String,
     total: Int,
+    estado: String,
     productos: List<CarritoModel>
 ) {
+
+    // Permite mostrar u ocultar los productos
     var mostrarDetalle by remember {
         mutableStateOf(false)
     }
@@ -102,9 +131,12 @@ fun TarjetaPedido(
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
+
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+
+            // Identificador del pedido
             Text(
                 text = numero,
                 style = MaterialTheme.typography.titleMedium
@@ -112,44 +144,45 @@ fun TarjetaPedido(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "Total: $$total",
-                style = MaterialTheme.typography.bodyMedium
-            )
+            // Total de la compra
+            Text("Total: $$total")
 
-            Text(
-                text = "Estado: Confirmado",
-                style = MaterialTheme.typography.bodySmall
-            )
+            // Estado real que tiene registrado el pedido
+            Text("Estado: $estado")
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Abre o cierra los detalles del pedido
             Button(
                 onClick = {
                     mostrarDetalle = !mostrarDetalle
                 }
             ) {
                 Text(
-                    text = if (mostrarDetalle) "Ocultar detalle" else "Ver detalle"
+                    if (mostrarDetalle) {
+                        "Ocultar detalle"
+                    } else {
+                        "Ver detalle"
+                    }
                 )
             }
 
             if (mostrarDetalle) {
-                Spacer(modifier = Modifier.height(8.dp))
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Detalle del pedido",
+                    text = "Productos del pedido",
                     style = MaterialTheme.typography.titleMedium
                 )
 
-
-                productos.forEach { producto ->
+                // Muestra los productos comprados
+                for (producto in productos) {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = producto.nombre,
-                        style = MaterialTheme.typography.bodyMedium
+                        text = producto.nombre
                     )
 
                     Text(
@@ -157,13 +190,11 @@ fun TarjetaPedido(
                     )
 
                     Text(
-                        text = "Subtotal: $${producto.precio * producto.cantidad}"
+                        text = "Subtotal: " +
+                                "$${producto.precio * producto.cantidad}"
                     )
                 }
-
             }
-
         }
     }
 }
-
