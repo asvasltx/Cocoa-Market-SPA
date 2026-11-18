@@ -1,7 +1,13 @@
 
 package com.example.cocoa_market_spa.viewmodel
 
+import android.annotation.SuppressLint
 import android.app.Application
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,7 +18,7 @@ import kotlinx.coroutines.launch
 class CarritoViewModel(application: Application) :
     AndroidViewModel(application) {
 
-    // Acceso a los productos guardados actualmente en SQLite
+    // Acceso temporal a los productos de SQLite
     private val productoDao =
         AppDatabase.getDatabase(application).ProductoDao()
 
@@ -20,44 +26,51 @@ class CarritoViewModel(application: Application) :
     var productos = mutableStateOf<List<CarritoModel>>(emptyList())
         private set
 
-    // Guarda el stock disponible de cada producto
+    // Stock disponible de cada producto
     var stockDisponible = mutableStateOf<Map<Int, Int>>(emptyMap())
         private set
 
-    // Muestra mensajes cuando ocurre un problema
+    // Mensajes para el comprador
     var mensaje = mutableStateOf("")
         private set
 
-    // Evita realizar cambios simultaneos
+    // Evita operaciones simultaneas
     var operacionEnCurso = mutableStateOf(false)
         private set
 
-    // Agrega un producto respetando su stock
+    // Agrega productos respetando el stock
     fun agregarProducto(producto: CarritoModel) {
 
         if (operacionEnCurso.value) return
 
+        if (producto.cantidad <= 0) {
+            mensaje.value = "Selecciona una cantidad valida."
+            return
+        }
+
         operacionEnCurso.value = true
 
         viewModelScope.launch {
+
             try {
 
-                // Consulta el producto registrado
-                val productoActual =
-                    productoDao.obtenerPorId(producto.productoId)
+                // Consulta el producto actualizado
+                val actual = productoDao.obtenerPorId(
+                    producto.productoId
+                )
 
-                if (productoActual == null) {
-                    mensaje.value = "Producto no encontrado"
+                if (actual == null) {
+
+                    mensaje.value = "El producto ya no existe."
 
                 } else {
-
-                    val stock = productoActual.stock
 
                     // Guarda el stock disponible
                     stockDisponible.value =
                         stockDisponible.value +
-                                (producto.productoId to stock)
+                                (producto.productoId to actual.stock)
 
+                    // Comprueba si ya esta en el carrito
                     val existente = productos.value.find {
                         it.productoId == producto.productoId
                     }
@@ -65,59 +78,67 @@ class CarritoViewModel(application: Application) :
                     val cantidadAnterior =
                         existente?.cantidad ?: 0
 
-                    val nuevaCantidad =
+                    val cantidadNueva =
                         cantidadAnterior + producto.cantidad
 
-                    // Nunca supera el stock registrado
-                    val cantidadFinal =
-                        minOf(nuevaCantidad, stock)
-
-                    if (cantidadFinal <= cantidadAnterior) {
+                    // Impide superar el inventario
+                    if (cantidadNueva > actual.stock) {
 
                         mensaje.value =
-                            "No hay mas unidades disponibles"
+                            "Stock insuficiente. Disponible: " +
+                                    "${actual.stock} unidades."
 
                     } else {
 
-                        if (existente != null) {
-
-                            // Actualiza el producto existente
-                            productos.value = productos.value.map {
-
-                                if (it.productoId == producto.productoId) {
-                                    it.copy(
-                                        cantidad = cantidadFinal,
-                                        precio = productoActual.precio
-                                    )
-                                } else {
-                                    it
-                                }
-                            }
-
-                        } else {
+                        if (existente == null) {
 
                             // Agrega el producto nuevo
                             productos.value = productos.value +
                                     producto.copy(
-                                        cantidad = cantidadFinal,
-                                        precio = productoActual.precio
+                                        nombre = actual.nombre,
+                                        precio = actual.precio,
+                                        cantidad = cantidadNueva
                                     )
+
+                        } else {
+
+                            // Actualiza un producto existente
+                            productos.value = productos.value.map {
+
+                                if (it.productoId == producto.productoId) {
+
+                                    it.copy(
+                                        nombre = actual.nombre,
+                                        precio = actual.precio,
+                                        cantidad = cantidadNueva
+                                    )
+
+                                } else {
+                                    it
+                                }
+                            }
                         }
 
-                        mensaje.value = ""
+                        mensaje.value = "Producto agregado al carrito."
+
+                        // Vibra solamente si se agrego correctamente
+                        vibrarConfirmacion()
                     }
                 }
 
             } catch (e: Exception) {
-                mensaje.value = "Error al agregar el producto"
+
+                mensaje.value =
+                    "No se pudo agregar el producto al carrito."
 
             } finally {
+
                 operacionEnCurso.value = false
             }
         }
     }
 
-    // Consulta nuevamente el stock de los productos del carrito
+    // Consulta nuevamente el stock y los precios
     fun actualizarStockDisponible() {
 
         if (operacionEnCurso.value) return
@@ -125,31 +146,63 @@ class CarritoViewModel(application: Application) :
         operacionEnCurso.value = true
 
         viewModelScope.launch {
+
             try {
 
                 val nuevosStocks = mutableMapOf<Int, Int>()
+                val productosActualizados =
+                    mutableListOf<CarritoModel>()
 
                 for (producto in productos.value) {
 
-                    val productoActual =
-                        productoDao.obtenerPorId(producto.productoId)
+                    val actual = productoDao.obtenerPorId(
+                        producto.productoId
+                    )
 
+                    // Guarda el stock actual
                     nuevosStocks[producto.productoId] =
-                        productoActual?.stock ?: 0
+                        actual?.stock ?: 0
+
+                    if (actual != null) {
+
+                        // Actualiza nombre y precio
+                        productosActualizados.add(
+                            producto.copy(
+                                nombre = actual.nombre,
+                                precio = actual.precio
+                            )
+                        )
+
+                    } else {
+
+                        productosActualizados.add(producto)
+                    }
                 }
 
                 stockDisponible.value = nuevosStocks
+                productos.value = productosActualizados
+
+                if (!carritoValido() &&
+                    productos.value.isNotEmpty()
+                ) {
+
+                    mensaje.value =
+                        "Revisa el stock de los productos del carrito."
+                }
 
             } catch (e: Exception) {
-                mensaje.value = "No se pudo consultar el stock"
+
+                mensaje.value =
+                    "No se pudo consultar el stock disponible."
 
             } finally {
+
                 operacionEnCurso.value = false
             }
         }
     }
 
-    // Aumenta una unidad si existe stock disponible
+    // Aumenta una unidad si existe stock
     fun aumentarCantidad(productoId: Int) {
 
         if (operacionEnCurso.value) return
@@ -157,31 +210,39 @@ class CarritoViewModel(application: Application) :
         operacionEnCurso.value = true
 
         viewModelScope.launch {
+
             try {
 
-                val productoActual =
-                    productoDao.obtenerPorId(productoId)
+                val actual = productoDao.obtenerPorId(
+                    productoId
+                )
 
-                val stock = productoActual?.stock ?: 0
+                val stock = actual?.stock ?: 0
 
                 stockDisponible.value =
-                    stockDisponible.value + (productoId to stock)
+                    stockDisponible.value +
+                            (productoId to stock)
 
-                val productoCarrito = productos.value.find {
+                val producto = productos.value.find {
                     it.productoId == productoId
                 }
 
-                if (productoCarrito != null) {
+                if (producto != null) {
 
-                    if (productoCarrito.cantidad < stock) {
+                    if (producto.cantidad < stock &&
+                        actual != null
+                    ) {
 
+                        // Aumenta la cantidad y actualiza precio
                         productos.value = productos.value.map {
 
                             if (it.productoId == productoId) {
+
                                 it.copy(
                                     cantidad = it.cantidad + 1,
-                                    precio = productoActual!!.precio
+                                    precio = actual.precio
                                 )
+
                             } else {
                                 it
                             }
@@ -189,22 +250,29 @@ class CarritoViewModel(application: Application) :
 
                         mensaje.value = ""
 
+                        // Vibra solamente si aumento correctamente
+                        vibrarConfirmacion()
+
                     } else {
+
                         mensaje.value =
-                            "No hay mas unidades disponibles"
+                            "No hay mas unidades disponibles."
                     }
                 }
 
             } catch (e: Exception) {
-                mensaje.value = "Error al aumentar la cantidad"
+
+                mensaje.value =
+                    "No se pudo aumentar la cantidad."
 
             } finally {
+
                 operacionEnCurso.value = false
             }
         }
     }
 
-    // Disminuye una unidad, sin bajar de 1
+    // Disminuye una unidad sin bajar de 1
     fun disminuirCantidad(productoId: Int) {
 
         if (operacionEnCurso.value) return
@@ -214,7 +282,11 @@ class CarritoViewModel(application: Application) :
             if (it.productoId == productoId &&
                 it.cantidad > 1
             ) {
-                it.copy(cantidad = it.cantidad - 1)
+
+                it.copy(
+                    cantidad = it.cantidad - 1
+                )
+
             } else {
                 it
             }
@@ -223,7 +295,7 @@ class CarritoViewModel(application: Application) :
         mensaje.value = ""
     }
 
-    // Elimina solamente el producto seleccionado
+    // Elimina un producto del carrito
     fun eliminarProducto(productoId: Int) {
 
         if (operacionEnCurso.value) return
@@ -238,7 +310,7 @@ class CarritoViewModel(application: Application) :
         mensaje.value = ""
     }
 
-    // Elimina todos los productos del carrito
+    // Vacia todo el carrito
     fun vaciarCarrito() {
 
         if (operacionEnCurso.value) return
@@ -248,7 +320,7 @@ class CarritoViewModel(application: Application) :
         mensaje.value = ""
     }
 
-    // Calcula el valor total del carrito
+    // Calcula el total de la compra
     fun calcularTotal(): Int {
 
         return productos.value.sumOf {
@@ -256,7 +328,7 @@ class CarritoViewModel(application: Application) :
         }
     }
 
-    // Comprueba que las cantidades respeten el stock
+    // Comprueba que el carrito sea valido
     fun carritoValido(): Boolean {
 
         if (productos.value.isEmpty()) {
@@ -281,5 +353,60 @@ class CarritoViewModel(application: Application) :
     // Limpia los mensajes anteriores
     fun limpiarMensaje() {
         mensaje.value = ""
+    }
+
+    // VIBRACION NATIVA
+    // Basada en la primera implementacion del proyecto
+    @SuppressLint("MissingPermission")
+    @Suppress("DEPRECATION")
+    private fun vibrarConfirmacion() {
+
+        try {
+
+            val context = getApplication<Application>()
+
+            val vibrador: Vibrator
+
+            // Android 12 o superior usa VibratorManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+
+                val manager = context.getSystemService(
+                    Context.VIBRATOR_MANAGER_SERVICE
+                ) as VibratorManager
+
+                vibrador = manager.defaultVibrator
+
+            } else {
+
+                // Versiones anteriores usan Vibrator
+                vibrador = context.getSystemService(
+                    Context.VIBRATOR_SERVICE
+                ) as Vibrator
+            }
+
+            // Comprueba que el telefono tenga vibracion
+            if (vibrador.hasVibrator()) {
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+                    // Vibracion de 150 milisegundos
+                    vibrador.vibrate(
+                        VibrationEffect.createOneShot(
+                            150L,
+                            VibrationEffect.DEFAULT_AMPLITUDE
+                        )
+                    )
+
+                } else {
+
+                    // Compatibilidad con Android antiguo
+                    vibrador.vibrate(150L)
+                }
+            }
+
+        } catch (e: Exception) {
+
+            // Si falla la vibracion, el carrito sigue funcionando
+        }
     }
 }
