@@ -3,21 +3,22 @@ package com.example.cocoa_market_spa.catalogo
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -25,11 +26,14 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,18 +52,43 @@ fun CatalogoScreen(
     onProductoClick: (Int) -> Unit
 ) {
 
-    // Guarda la categoria seleccionada
-    var categoriaSeleccionada by remember {
-        mutableStateOf("Todos")
-    }
-
-    // NUEVO: guarda el texto escrito en el buscador
+    // Guarda el texto que escribe el comprador
     var busqueda by remember {
         mutableStateOf("")
     }
 
-    // Permite abrir Google Maps desde Android
+    // Categoria seleccionada
+    var categoriaSeleccionada by remember {
+        mutableStateOf("Todos")
+    }
+
+    // Permite mostrar solamente productos con stock
+    var soloDisponibles by remember {
+        mutableStateOf(false)
+    }
+
+    // Controla el orden de los precios
+    var ordenPrecio by remember {
+        mutableStateOf("Normal")
+    }
+
     val context = LocalContext.current
+
+    // Obtiene las categorias de los productos registrados.
+    // Asi tambien apareceran las categorias de nuevos productos.
+    val categorias = listOf("Todos") +
+            productos.map {
+                it.categoria.trim()
+            }.filter {
+                it.isNotEmpty()
+            }.distinct().sorted()
+
+    // Si se elimina una categoria, vuelve a Todos.
+    LaunchedEffect(categorias) {
+        if (categoriaSeleccionada !in categorias) {
+            categoriaSeleccionada = "Todos"
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -67,13 +96,11 @@ fun CatalogoScreen(
             .padding(16.dp)
     ) {
 
-        // Ubicacion del minimarket
+        // Abre la ubicacion del local en Google Maps
         Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+            modifier = Modifier.clickable {
 
-            Icon(
-                modifier = Modifier.clickable {
+                try {
 
                     val direccion =
                         "Av. Las Condes 9280, Local 4, Las Condes, Santiago, Chile"
@@ -88,9 +115,22 @@ fun CatalogoScreen(
                     )
 
                     context.startActivity(intent)
-                },
+
+                } catch (e: Exception) {
+
+                    Toast.makeText(
+                        context,
+                        "No se pudo abrir la ubicacion.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Icon(
                 imageVector = Icons.Default.LocationOn,
-                contentDescription = "Ubicanos :D"
+                contentDescription = "Ubicacion"
             )
 
             Text(
@@ -101,7 +141,6 @@ fun CatalogoScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Nombre de la aplicacion
         Text(
             text = "Cocoa Market",
             style = MaterialTheme.typography.titleLarge
@@ -109,7 +148,7 @@ fun CatalogoScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // NUEVO: barra de busqueda funcional
+        // BUSQUEDA POR NOMBRE O DESCRIPCION
         OutlinedTextField(
             value = busqueda,
             onValueChange = {
@@ -117,7 +156,7 @@ fun CatalogoScreen(
             },
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
-                Text("Que te interesa?")
+                Text("¿Que producto buscas?")
             },
             leadingIcon = {
                 Icon(
@@ -131,88 +170,197 @@ fun CatalogoScreen(
             singleLine = true
         )
 
+        // Permite limpiar rapidamente la busqueda
+        if (busqueda.isNotEmpty()) {
+
+            TextButton(
+                onClick = {
+                    busqueda = ""
+                }
+            ) {
+                Text("Limpiar busqueda")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Text(
-            text = "Catálogo de productos",
+            text = "Catalogo de productos",
             style = MaterialTheme.typography.titleMedium
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // Categorias horizontales del catalogo
+        // FILTROS DE CATEGORIA
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 8.dp)
+            contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
 
-            items(
-                listOf(
-                    "Todos",
-                    "Abarrotes",
-                    "Bebidas",
-                    "Higiene",
-                    "Lacteos"
-                )
-            ) { categoria ->
+            items(categorias) { categoria ->
 
                 Button(
                     onClick = {
                         categoriaSeleccionada = categoria
                     }
                 ) {
-                    Text(text = categoria)
+                    Text(categoria)
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // Mantiene la animacion al cambiar de categoria
+        // FILTRO DE PRODUCTOS DISPONIBLES
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Checkbox(
+                checked = soloDisponibles,
+                onCheckedChange = {
+                    soloDisponibles = it
+                }
+            )
+
+            Text("Solo productos disponibles")
+        }
+
+        // ORDENAMIENTO POR PRECIO
+        Button(
+            onClick = {
+
+                ordenPrecio = when (ordenPrecio) {
+
+                    "Normal" -> "Menor precio"
+
+                    "Menor precio" -> "Mayor precio"
+
+                    else -> "Normal"
+                }
+            }
+        ) {
+
+            Text("Orden: $ordenPrecio")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Conserva la animacion al cambiar de categoria
         AnimatedContent(
             targetState = categoriaSeleccionada,
             label = "AnimacionDeCatalogo",
             modifier = Modifier.weight(1f)
         ) { categoriaActual ->
 
-            // NUEVO: filtra por categoria y por nombre
+            // BUSQUEDA Y FILTROS
             val productosFiltrados = productos.filter { producto ->
 
-                // Comprueba la categoria seleccionada
+                // Comprueba la categoria
                 val coincideCategoria =
                     categoriaActual == "Todos" ||
-                            producto.categoria == categoriaActual
+                            producto.categoria.equals(
+                                categoriaActual,
+                                ignoreCase = true
+                            )
 
-                // Busca productos sin distinguir mayusculas
-                val coincideBusqueda = producto.nombre.contains(
-                    busqueda.trim(),
-                    ignoreCase = true
-                )
+                // Busca por nombre o descripcion
+                val texto = busqueda.trim()
 
-                // Deben cumplirse ambas condiciones
-                coincideCategoria && coincideBusqueda
+                val coincideBusqueda =
+                    producto.nombre.contains(
+                        texto,
+                        ignoreCase = true
+                    ) ||
+                            producto.descripcion.contains(
+                                texto,
+                                ignoreCase = true
+                            )
+
+                // Comprueba disponibilidad
+                val coincideStock =
+                    !soloDisponibles || producto.stock > 0
+
+                // Deben cumplirse todas las condiciones
+                coincideCategoria &&
+                        coincideBusqueda &&
+                        coincideStock
+
             }
 
-            // Mensaje si no se encuentran productos
-            if (productosFiltrados.isEmpty()) {
+            // Aplica el orden seleccionado
+            val productosOrdenados = when (ordenPrecio) {
 
-                Text(
-                    "No hay productos que coincidan con la busqueda"
-                )
+                "Menor precio" -> {
+                    productosFiltrados.sortedBy {
+                        it.precio
+                    }
+                }
+
+                "Mayor precio" -> {
+                    productosFiltrados.sortedByDescending {
+                        it.precio
+                    }
+                }
+
+                else -> {
+                    productosFiltrados.sortedBy {
+                        it.nombre.lowercase()
+                    }
+                }
+            }
+
+            // Muestra un mensaje cuando no existen resultados
+            if (productosOrdenados.isEmpty()) {
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = if (productos.isEmpty()) {
+                            "No hay productos registrados."
+                        } else {
+                            "No encontramos productos con esos filtros."
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (productos.isNotEmpty()) {
+
+                        // Restablece todos los filtros
+                        Button(
+                            onClick = {
+                                busqueda = ""
+                                categoriaSeleccionada = "Todos"
+                                soloDisponibles = false
+                                ordenPrecio = "Normal"
+                            }
+                        ) {
+                            Text("Limpiar filtros")
+                        }
+                    }
+                }
 
             } else {
 
-                // Lista de los productos encontrados
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
 
-                    items(productosFiltrados) { producto ->
+                    items(productosOrdenados) { producto ->
 
                         Producto(
                             nombre = producto.nombre,
                             precio = "$${producto.precio}",
                             imagen = producto.imagen,
+                            stock = producto.stock,
                             onClick = {
                                 onProductoClick(producto.id)
                             }
@@ -224,18 +372,20 @@ fun CatalogoScreen(
     }
 }
 
-// Tarjeta que muestra cada producto
+// Tarjeta de producto del catalogo
 @Composable
 fun Producto(
     nombre: String,
     precio: String,
     imagen: Int,
+    stock: Int,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
 
     Card(
         modifier = modifier.clickable {
+            // Permite consultar el detalle aunque este agotado
             onClick()
         },
         shape = RoundedCornerShape(12.dp),
@@ -269,12 +419,30 @@ fun Producto(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Precio del producto
+            // Precio en pesos chilenos
             Text(
                 text = precio,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Informa sobre el inventario
+            if (stock <= 0) {
+
+                Text(
+                    text = "Producto agotado",
+                    color = MaterialTheme.colorScheme.error
+                )
+
+            } else {
+
+                Text(
+                    text = "Disponible: $stock unidades",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }
