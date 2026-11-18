@@ -1,9 +1,15 @@
+
 package com.example.cocoa_market_spa.model
 
- data class PedidoModel(
+// Representa un pedido dentro de la aplicacion
+data class PedidoModel(
     val numero: String,
     val total: Int,
     val productos: List<CarritoModel>,
-    val estado: String = "Confirmado"
-) {
-}
+    val estado: String = "Confirmado",
+
+    // Nuevos datos de entrega y pago
+    val tipoEntrega: String = "Retiro en tienda",
+    val direccion: String = "",
+    val metodoPago: String = "Efectivo"
+)

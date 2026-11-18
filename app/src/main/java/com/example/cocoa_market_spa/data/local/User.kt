@@ -1,5 +1,6 @@
 package com.example.cocoa_market_spa.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -10,5 +11,8 @@ data class User(
     val id: Int = 0,
     val nombre: String,
     val email: String,
-    val password: String
+    val password: String,
+
+    @ColumnInfo(defaultValue = "'CLIENTE'")
+    val rol: String = "CLIENTE"
 )

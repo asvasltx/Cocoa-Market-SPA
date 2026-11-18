@@ -1,94 +1,125 @@
+
 package com.example.cocoa_market_spa.catalogo
 
-import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import android.media.RingtoneManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.example.cocoa_market_spa.catalogo.viewmodel.CatalogoViewModel
-import com.example.cocoa_market_spa.data.local.AppDatabase
-import androidx.compose.material3.Text
-import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.cocoa_market_spa.viewmodel.CarritoViewModel
-import com.example.cocoa_market_spa.model.CarritoModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.cocoa_market_spa.carrito.CarritoScreen
 import com.example.cocoa_market_spa.carrito.EntregaPagoScreen
 import com.example.cocoa_market_spa.carrito.PedidoConfirmadoScreen
-import com.example.cocoa_market_spa.viewmodel.PedidoViewModel
 import com.example.cocoa_market_spa.carrito.PedidoScreen
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import android.media.AudioManager
-import android.media.ToneGenerator
-import android.media.RingtoneManager
-
+import com.example.cocoa_market_spa.catalogo.viewmodel.CatalogoViewModel
+import com.example.cocoa_market_spa.data.local.AppDatabase
+import com.example.cocoa_market_spa.model.CarritoModel
+import com.example.cocoa_market_spa.viewmodel.CarritoViewModel
+import com.example.cocoa_market_spa.viewmodel.PedidoViewModel
 
 @Composable
-fun CatalogoNavigation(nombreUsuario: String) {
+fun CatalogoNavigation(
+    nombreUsuario: String,
+    onCerrarSesion: () -> Unit
+) {
 
+    // Controla las pantallas del comprador
     val navController = rememberNavController()
+
     val context = LocalContext.current
+
+    // ViewModel del carrito
     val carritoViewModel: CarritoViewModel = viewModel()
 
-    val pedidoDao = AppDatabase.getDatabase(context).PedidoDao()
-
-    val pedidoViewModel: PedidoViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
-                return PedidoViewModel(pedidoDao) as T
-            }
-        }
-    )
-    var totalPedido by remember { mutableStateOf(0) }
-
-
-
+    // Base de datos comercial temporal
     val database = remember {
         AppDatabase.getDatabase(context)
     }
 
+    // ViewModel compartido para guardar y consultar pedidos
+    val pedidoViewModel: PedidoViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+
+            override fun <T : ViewModel> create(
+                modelClass: Class<T>
+            ): T {
+
+                @Suppress("UNCHECKED_CAST")
+                return PedidoViewModel(database) as T
+            }
+        }
+    )
+
+    // ViewModel del catalogo
     val catalogoViewModel = remember {
         CatalogoViewModel(database.ProductoDao())
     }
 
-    LaunchedEffect(Unit) {
-        catalogoViewModel.cargarProductos()
+    // Datos de la ultima compra confirmada
+    var totalPedido by remember {
+        mutableStateOf(0)
+    }
+
+    var tipoEntregaPedido by remember {
+        mutableStateOf("")
+    }
+
+    var metodoPagoPedido by remember {
+        mutableStateOf("")
+    }
+
+    var direccionPedido by remember {
+        mutableStateOf("")
     }
 
     NavHost(
         navController = navController,
         startDestination = "catalogo"
     ) {
-        //composable para la barra inferior
 
+        // CATALOGO PRINCIPAL
         composable("catalogo") {
+
+            // Actualiza los productos al entrar al catalogo
+            LaunchedEffect(Unit) {
+                catalogoViewModel.cargarProductos()
+            }
 
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
+
                 bottomBar = {
                     BarraInferior(
                         onInicio = {
-                            navController.navigate("catalogo")
+                            navController.navigate("catalogo") {
+                                launchSingleTop = true
+                            }
                         },
+
                         onCarrito = {
                             navController.navigate("carrito")
                         },
+
                         onPedidos = {
                             navController.navigate("pedidos")
                         },
+
                         onCuenta = {
-                            navController.navigate("Cuenta")
+                            navController.navigate("cuenta")
                         }
                     )
                 }
@@ -102,6 +133,7 @@ fun CatalogoNavigation(nombreUsuario: String) {
 
                     CatalogoScreen(
                         productos = catalogoViewModel.productos.value,
+
                         onProductoClick = { id ->
                             navController.navigate("detalle/$id")
                         }
@@ -110,174 +142,263 @@ fun CatalogoNavigation(nombreUsuario: String) {
             }
         }
 
-
+        // CARRITO DE COMPRAS
         composable("carrito") {
+
             Scaffold(
                 bottomBar = {
                     BarraInferior(
                         onInicio = {
                             navController.navigate("catalogo")
                         },
+
                         onCarrito = {
-                            navController.navigate("carrito")
+                            navController.navigate("carrito") {
+                                launchSingleTop = true
+                            }
                         },
+
                         onPedidos = {
                             navController.navigate("pedidos")
                         },
+
                         onCuenta = {
                             navController.navigate("cuenta")
                         }
                     )
                 }
             ) { innerPadding ->
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
+
                     CarritoScreen(
                         onNavigateToPedidos = {
                             navController.navigate("entrega_pago")
                         },
+
                         onVolverCatalogo = {
                             navController.navigate("catalogo")
                         },
+
                         carritoViewModel = carritoViewModel
                     )
                 }
             }
         }
 
-
-
+        // ENTREGA Y PAGO
         composable("entrega_pago") {
+
             EntregaPagoScreen(
-                onConfirmarPedido = {
-                    totalPedido = carritoViewModel.calcularTotal()
+                total = carritoViewModel.calcularTotal(),
+                guardandoPedido = pedidoViewModel.guardandoPedido.value,
+                errorPedido = pedidoViewModel.errorPedido.value,
 
-                    if (carritoViewModel.productos.value.isNotEmpty()) {
+                onConfirmarPedido = { entrega, pago, direccion ->
 
-                        pedidoViewModel.agregarPedido(
-                            total = totalPedido,
-                            productos = carritoViewModel.productos.value
-                        )
+                    val total = carritoViewModel.calcularTotal()
 
-                        carritoViewModel.vaciarCarrito()
+                    // Registra el pedido antes de mostrar confirmacion
+                    pedidoViewModel.agregarPedido(
+                        total = total,
+                        productos = carritoViewModel.productos.value,
+                        tipoEntrega = entrega,
+                        metodoPago = pago,
+                        direccion = direccion,
 
-                        // Para el sonido al confirmar pedido
-                        val sonido = RingtoneManager.getRingtone(
-                            context,
-                            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                        )
-                        sonido?.play()
+                        onGuardado = {
 
-                        navController.navigate("pedido_confirmado")
-                    }
+                            // Conserva los datos para el resumen
+                            totalPedido = total
+                            tipoEntregaPedido = entrega
+                            metodoPagoPedido = pago
+                            direccionPedido = direccion
+
+                            // Vacia el carrito solo si el guardado funciono
+                            carritoViewModel.vaciarCarrito()
+
+                            // Actualiza el inventario visible
+                            catalogoViewModel.cargarProductos()
+
+                            // Reproduce el sonido de confirmacion
+                            try {
+
+                                val sonido = RingtoneManager.getRingtone(
+                                    context,
+                                    RingtoneManager.getDefaultUri(
+                                        RingtoneManager.TYPE_NOTIFICATION
+                                    )
+                                )
+
+                                sonido?.play()
+
+                            } catch (e: Exception) {
+
+                                // El pedido sigue guardado si falla el sonido
+                            }
+
+                            // Abre la confirmacion
+                            navController.navigate("pedido_confirmado") {
+
+                                popUpTo("entrega_pago") {
+                                    inclusive = true
+                                }
+                            }
+                        }
+                    )
                 },
+
                 onVolverCarrito = {
                     navController.popBackStack()
                 }
             )
         }
 
+        // CONFIRMACION DE COMPRA
         composable("pedido_confirmado") {
+
             PedidoConfirmadoScreen(
                 total = totalPedido,
+                tipoEntrega = tipoEntregaPedido,
+                metodoPago = metodoPagoPedido,
+                direccion = direccionPedido,
+
                 onVerPedidos = {
                     navController.navigate("pedidos")
                 },
-                onVolverCatalogo = {
-                    navController.navigate("carrito")
 
+                onVolverCatalogo = {
+                    navController.navigate("catalogo")
                 }
             )
         }
 
-
+        // HISTORIAL DE PEDIDOS
         composable("pedidos") {
+
             Scaffold(
                 bottomBar = {
                     BarraInferior(
                         onInicio = {
                             navController.navigate("catalogo")
                         },
+
                         onCarrito = {
                             navController.navigate("carrito")
                         },
+
                         onPedidos = {
-                            navController.navigate("pedidos")
+                            navController.navigate("pedidos") {
+                                launchSingleTop = true
+                            }
                         },
+
                         onCuenta = {
                             navController.navigate("cuenta")
                         }
                     )
                 }
             ) { innerPadding ->
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
+
                     PedidoScreen(
                         onVolvercarrito = {
                             navController.navigate("carrito")
                         },
+
                         pedidoViewModel = pedidoViewModel
                     )
                 }
             }
         }
 
+        // MI CUENTA
         composable("cuenta") {
+
             Scaffold(
                 bottomBar = {
                     BarraInferior(
                         onInicio = {
                             navController.navigate("catalogo")
                         },
+
                         onCarrito = {
                             navController.navigate("carrito")
                         },
+
                         onPedidos = {
                             navController.navigate("pedidos")
                         },
+
                         onCuenta = {
-                            navController.navigate("cuenta")
+                            navController.navigate("cuenta") {
+                                launchSingleTop = true
+                            }
                         }
                     )
                 }
             ) { innerPadding ->
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
+
                     MiCuentaScreen(
-                        nombreUsuario = nombreUsuario
+                        nombreUsuario = nombreUsuario,
+
+                        // Acceso directo al historial de compras
+                        onVerPedidos = {
+                            navController.navigate("pedidos")
+                        },
+
+                        // Regresa al catalogo
+                        onVolverCatalogo = {
+                            navController.navigate("catalogo")
+                        },
+
+                        // NUEVO: cierra la sesion del comprador
+                        onCerrarSesion = {
+
+                            // Limpia el carrito del usuario anterior
+                            carritoViewModel.vaciarCarrito()
+
+                            // Solicita volver al login principal
+                            onCerrarSesion()
+                        }
                     )
                 }
             }
         }
 
-
-
-
-
-
-        //Para ver el detalle de los productos
+        // DETALLE DE PRODUCTO
         composable("detalle/{id}") { backStackEntry ->
 
+            // Obtiene el ID del producto seleccionado
             val id = backStackEntry.arguments
                 ?.getString("id")
                 ?.toIntOrNull()
 
+            // Consulta el detalle actualizado
             LaunchedEffect(id) {
+
                 if (id != null) {
                     catalogoViewModel.cargarProductoPorId(id)
                 }
             }
 
-            val producto = catalogoViewModel.productoSeleccionado.value
+            val producto =
+                catalogoViewModel.productoSeleccionado.value
 
             if (producto != null && producto.id == id) {
 
@@ -287,11 +408,14 @@ fun CatalogoNavigation(nombreUsuario: String) {
                     descripcion = producto.descripcion,
                     stock = producto.stock,
                     imagen = producto.imagen,
+
                     onVolver = {
                         navController.popBackStack()
                     },
+
                     onAgregarCarrito = { cantidad ->
 
+                        // Convierte el producto a un item del carrito
                         val productoCarrito = CarritoModel(
                             productoId = producto.id,
                             nombre = producto.nombre,
@@ -300,12 +424,14 @@ fun CatalogoNavigation(nombreUsuario: String) {
                             imagen = producto.imagen
                         )
 
-                        carritoViewModel.agregarProducto(productoCarrito)
+                        carritoViewModel.agregarProducto(
+                            productoCarrito
+                        )
                     }
                 )
 
-
             } else {
+
                 Text("Cargando producto...")
             }
         }
