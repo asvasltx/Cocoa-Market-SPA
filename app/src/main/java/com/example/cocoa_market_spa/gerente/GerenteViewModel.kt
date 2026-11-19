@@ -21,26 +21,28 @@ import kotlinx.coroutines.launch
 class GerenteViewModel(application: Application) :
     AndroidViewModel(application) {
 
-    // Base de datos comercial temporal
-    private val database = AppDatabase.getDatabase(application)
+    // Base de datos utilizada temporalmente.
+    private val database =
+        AppDatabase.getDatabase(application)
+
     private val productoDao = database.ProductoDao()
     private val pedidoDao = database.PedidoDao()
 
-    // Productos y pedidos del gerente
-    var productos = mutableStateOf<List<ProductoEntity>>(emptyList())
+    var productos =
+        mutableStateOf<List<ProductoEntity>>(emptyList())
         private set
 
-    var pedidos = mutableStateOf<List<PedidoEntity>>(emptyList())
+    var pedidos =
+        mutableStateOf<List<PedidoEntity>>(emptyList())
         private set
 
-    // Detalles de un pedido seleccionado
-    var detallesPedido = mutableStateOf<List<DetallePedidoEntity>>(emptyList())
+    var detallesPedido =
+        mutableStateOf<List<DetallePedidoEntity>>(emptyList())
         private set
 
     var idDetalleAbierto = mutableStateOf<Int?>(null)
         private set
 
-    // Control de mensajes y operaciones
     var mensaje = mutableStateOf("")
         private set
 
@@ -50,7 +52,7 @@ class GerenteViewModel(application: Application) :
     var cargandoDetalles = mutableStateOf(false)
         private set
 
-    // Consulta productos y pedidos
+    // Recupera productos y pedidos desde Room.
     fun cargarDatos() {
 
         viewModelScope.launch {
@@ -59,27 +61,26 @@ class GerenteViewModel(application: Application) :
 
                 productos.value = productoDao.obtenerProductos()
 
-                val listaPedidos = pedidoDao.obtenerPedidos()
-                pedidos.value = listaPedidos
+                val lista = pedidoDao.obtenerPedidos()
+                pedidos.value = lista
 
-                // NUEVO: comprueba si llegaron pedidos nuevos
-                avisarPedidosNuevos(listaPedidos)
+                avisarPedidosNuevos(lista)
 
             } catch (e: Exception) {
 
-                mensaje.value = "No se pudieron cargar los datos."
+                mensaje.value =
+                    "No se pudieron cargar los datos."
             }
         }
     }
 
-    // NUEVO: notifica una sola vez los pedidos nuevos
+    // Notifica pedidos nuevos sin repetir los ya avisados.
     private fun avisarPedidosNuevos(
         listaPedidos: List<PedidoEntity>
     ) {
 
         val context = getApplication<Application>()
 
-        // Guarda el ultimo pedido avisado en el telefono
         val preferencias = context.getSharedPreferences(
             "avisos_gerente",
             Context.MODE_PRIVATE
@@ -90,11 +91,9 @@ class GerenteViewModel(application: Application) :
             0
         )
 
-        val ultimoPedido = listaPedidos.maxOfOrNull {
-            it.id
-        } ?: return
+        val ultimoPedido =
+            listaPedidos.maxOfOrNull { it.id } ?: return
 
-        // No repite notificaciones de pedidos ya revisados
         if (ultimoPedido <= ultimoAvisado) return
 
         val nuevos = listaPedidos.count {
@@ -110,30 +109,15 @@ class GerenteViewModel(application: Application) :
                 mensaje = "Tienes $nuevos pedido(s) por revisar."
             )
 
-            // Guarda el ID solo si pudo publicar el aviso
-            if (enviado) {
-
-                preferencias.edit()
-                    .putInt(
-                        "ultimo_pedido_avisado",
-                        ultimoPedido
-                    )
-                    .apply()
-            }
-
-        } else {
-
-            // Si no existen pendientes nuevos, actualiza la marca
-            preferencias.edit()
-                .putInt(
-                    "ultimo_pedido_avisado",
-                    ultimoPedido
-                )
-                .apply()
+            if (!enviado) return
         }
+
+        preferencias.edit()
+            .putInt("ultimo_pedido_avisado", ultimoPedido)
+            .apply()
     }
 
-    // NUEVO: envia una alerta cuando el stock es bajo
+    // Notifica cuando quedan pocas unidades.
     private fun avisarStockBajo(
         nombre: String,
         stock: Int
@@ -149,7 +133,7 @@ class GerenteViewModel(application: Application) :
         }
     }
 
-    // Crea o actualiza un producto
+    // Guarda un producto nuevo o modifica uno existente.
     fun guardarProducto(
         productoOriginal: ProductoEntity?,
         nombre: String,
@@ -169,16 +153,13 @@ class GerenteViewModel(application: Application) :
         val precio = precioTexto.toIntOrNull()
         val stock = stockTexto.toIntOrNull()
 
-        // Valida los datos obligatorios
-        if (
-            nombreLimpio.isBlank() ||
+        if (nombreLimpio.isBlank() ||
             descripcionLimpia.isBlank()
         ) {
             mensaje.value = "Completa nombre y descripcion."
             return
         }
 
-        // Mantiene las categorias actuales del catalogo
         val categoriasPermitidas = listOf(
             "Abarrotes",
             "Bebidas",
@@ -208,56 +189,54 @@ class GerenteViewModel(application: Application) :
 
             try {
 
-                // Evita productos con nombres duplicados
+                // Evita productos duplicados.
                 val existe = productoDao.obtenerProductos().any {
                     it.nombre.equals(
                         nombreLimpio,
                         ignoreCase = true
-                    ) && it.id != productoOriginal?.id
+                    ) &&
+                            it.id != productoOriginal?.id
                 }
 
                 if (existe) {
 
                     mensaje.value =
                         "Ya existe un producto con ese nombre."
-
                     return@launch
                 }
 
                 if (productoOriginal == null) {
 
-                    // Crea un producto con imagen temporal
-                    val productoNuevo = ProductoEntity(
-                        nombre = nombreLimpio,
-                        precio = precio,
-                        categoria = categoriaLimpia,
-                        descripcion = descripcionLimpia,
-                        stock = stock,
-                        imagen = R.drawable.ic_launcher_foreground
+                    productoDao.insertarProducto(
+                        ProductoEntity(
+                            nombre = nombreLimpio,
+                            precio = precio,
+                            categoria = categoriaLimpia,
+                            descripcion = descripcionLimpia,
+                            stock = stock,
+                            imagen =
+                                R.drawable.ic_launcher_foreground
+                        )
                     )
-
-                    productoDao.insertarProducto(productoNuevo)
 
                 } else {
 
-                    // Modifica el producto conservando su ID
-                    val actualizado = productoOriginal.copy(
-                        nombre = nombreLimpio,
-                        precio = precio,
-                        categoria = categoriaLimpia,
-                        descripcion = descripcionLimpia,
-                        stock = stock
+                    productoDao.actualizarProducto(
+                        productoOriginal.copy(
+                            nombre = nombreLimpio,
+                            precio = precio,
+                            categoria = categoriaLimpia,
+                            descripcion = descripcionLimpia,
+                            stock = stock
+                        )
                     )
-
-                    productoDao.actualizarProducto(actualizado)
                 }
 
-                // Actualiza el listado visible
                 productos.value = productoDao.obtenerProductos()
 
-                mensaje.value = "Producto guardado correctamente."
+                mensaje.value =
+                    "Producto guardado correctamente."
 
-                // Vibracion, sonido y aviso de stock bajo
                 confirmarCambioNativo()
                 avisarStockBajo(nombreLimpio, stock)
 
@@ -265,7 +244,8 @@ class GerenteViewModel(application: Application) :
 
             } catch (e: Exception) {
 
-                mensaje.value = "No se pudo guardar el producto."
+                mensaje.value =
+                    "No se pudo guardar el producto."
 
             } finally {
 
@@ -274,7 +254,7 @@ class GerenteViewModel(application: Application) :
         }
     }
 
-    // Aumenta o disminuye una unidad de stock
+    // Modifica una unidad del inventario.
     fun modificarStock(
         producto: ProductoEntity,
         cambio: Int
@@ -295,20 +275,17 @@ class GerenteViewModel(application: Application) :
                     cambio
                 )
 
+                productos.value = productoDao.obtenerProductos()
+
                 if (resultado == 1) {
 
-                    // Recupera el stock actualizado
-                    productos.value = productoDao.obtenerProductos()
+                    mensaje.value = "Stock actualizado."
+                    confirmarCambioNativo()
 
                     val actualizado = productos.value.find {
                         it.id == producto.id
                     }
 
-                    mensaje.value = "Stock actualizado."
-
-                    confirmarCambioNativo()
-
-                    // NUEVO: notificacion si quedan pocas unidades
                     if (actualizado != null) {
                         avisarStockBajo(
                             actualizado.nombre,
@@ -318,15 +295,14 @@ class GerenteViewModel(application: Application) :
 
                 } else {
 
-                    productos.value = productoDao.obtenerProductos()
-
                     mensaje.value =
                         "No se pudo modificar el stock."
                 }
 
             } catch (e: Exception) {
 
-                mensaje.value = "Error al actualizar el inventario."
+                mensaje.value =
+                    "Error al actualizar el inventario."
 
             } finally {
 
@@ -335,7 +311,7 @@ class GerenteViewModel(application: Application) :
         }
     }
 
-    // Abre o cierra el detalle de un pedido
+    // Abre o cierra los productos de un pedido.
     fun mostrarDetalles(pedidoId: Int) {
 
         if (idDetalleAbierto.value == pedidoId) {
@@ -353,16 +329,17 @@ class GerenteViewModel(application: Application) :
 
             try {
 
-                val detalles = pedidoDao.obtenerDetalles(pedidoId)
+                val detalles =
+                    pedidoDao.obtenerDetalles(pedidoId)
 
-                // Evita mostrar detalles de otro pedido
                 if (idDetalleAbierto.value == pedidoId) {
                     detallesPedido.value = detalles
                 }
 
             } catch (e: Exception) {
 
-                mensaje.value = "No se pudo cargar el detalle."
+                mensaje.value =
+                    "No se pudo cargar el detalle."
 
             } finally {
 
@@ -373,22 +350,34 @@ class GerenteViewModel(application: Application) :
         }
     }
 
-    // Cambia el estado de un pedido
+    // Avanza el pedido segun su tipo de entrega.
     fun avanzarPedido(pedido: PedidoEntity) {
 
         if (operacionEnCurso.value) return
 
-        // Orden permitido para preparar y entregar
         val nuevoEstado = when (pedido.estado) {
 
             "Confirmado" -> "Preparando"
+
             "Preparando" -> "Listo"
-            "Listo" -> "Entregado"
+
+            "Listo" -> {
+                if (pedido.tipoEntrega == "Domicilio") {
+                    "En despacho"
+                } else {
+                    "Entregado"
+                }
+            }
+
+            "En despacho" -> "Entregado"
+
             else -> null
         }
 
         if (nuevoEstado == null) {
-            mensaje.value = "Este pedido ya no puede avanzar."
+
+            mensaje.value =
+                "Este pedido ya no puede avanzar."
             return
         }
 
@@ -398,7 +387,6 @@ class GerenteViewModel(application: Application) :
 
             try {
 
-                // Impide actualizar un estado que ya cambio
                 val resultado = pedidoDao.actualizarEstado(
                     pedido.id,
                     pedido.estado,
@@ -414,7 +402,7 @@ class GerenteViewModel(application: Application) :
 
                     confirmarCambioNativo()
 
-                    // NUEVO: avisa cuando un pedido queda listo
+                    // Conserva el aviso local de pedido listo.
                     if (nuevoEstado == "Listo") {
 
                         Notificaciones.mostrar(
@@ -434,7 +422,8 @@ class GerenteViewModel(application: Application) :
 
             } catch (e: Exception) {
 
-                mensaje.value = "No se pudo actualizar el pedido."
+                mensaje.value =
+                    "No se pudo actualizar el pedido."
 
             } finally {
 
@@ -443,12 +432,11 @@ class GerenteViewModel(application: Application) :
         }
     }
 
-    // Limpia mensajes anteriores
     fun limpiarMensaje() {
         mensaje.value = ""
     }
 
-    // Conserva el sonido y la vibracion ya implementados
+    // Vibracion y sonido que ya utilizaba la gerencia.
     @Suppress("DEPRECATION")
     private fun confirmarCambioNativo() {
 
@@ -456,17 +444,17 @@ class GerenteViewModel(application: Application) :
 
             val context = getApplication<Application>()
 
-            // Vibracion corta al guardar un cambio
             val vibrador = context.getSystemService(
                 Context.VIBRATOR_SERVICE
             ) as? Vibrator
 
-            if (
-                vibrador != null &&
+            if (vibrador != null &&
                 vibrador.hasVibrator()
             ) {
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (Build.VERSION.SDK_INT >=
+                    Build.VERSION_CODES.O
+                ) {
 
                     vibrador.vibrate(
                         VibrationEffect.createOneShot(
@@ -481,22 +469,18 @@ class GerenteViewModel(application: Application) :
                 }
             }
 
-            // Sonido de confirmacion
-            val uri = RingtoneManager.getDefaultUri(
-                RingtoneManager.TYPE_NOTIFICATION
-            )
-
             val sonido = RingtoneManager.getRingtone(
                 context,
-                uri
+                RingtoneManager.getDefaultUri(
+                    RingtoneManager.TYPE_NOTIFICATION
+                )
             )
 
             sonido?.play()
 
         } catch (e: Exception) {
 
-            // El cambio guardado sigue siendo valido
-            // aunque el telefono no tenga estos recursos
+            // No afecta el cambio ya guardado.
         }
     }
 }

@@ -38,20 +38,16 @@ fun GerenteScreen(
     onCerrarSesion: () -> Unit
 ) {
 
-    // ViewModel encargado de productos y pedidos
     val gerenteViewModel: GerenteViewModel = viewModel()
 
-    // Pantalla que esta utilizando el gerente
     var seccionActual by remember {
         mutableStateOf("INICIO")
     }
 
-    // Producto que se esta editando
     var productoEditando by remember {
         mutableStateOf<ProductoEntity?>(null)
     }
 
-    // Carga los productos y pedidos al abrir el panel
     LaunchedEffect(Unit) {
         gerenteViewModel.cargarDatos()
     }
@@ -60,7 +56,6 @@ fun GerenteScreen(
     val pedidos = gerenteViewModel.pedidos.value
     val ocupado = gerenteViewModel.operacionEnCurso.value
 
-    // Indicadores reales del inventario local
     val bajoStock = productos.count {
         it.stock <= 5
     }
@@ -83,7 +78,6 @@ fun GerenteScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
-        // Cabecera principal
         Text(
             text = "Cocoa Market",
             style = MaterialTheme.typography.headlineMedium,
@@ -95,7 +89,7 @@ fun GerenteScreen(
             color = CafePrincipal
         )
 
-        // Permite regresar al menu principal
+        // Permite volver al panel principal.
         if (seccionActual != "INICIO") {
 
             OutlinedButton(
@@ -108,7 +102,6 @@ fun GerenteScreen(
             }
         }
 
-        // Mensajes de confirmacion o error
         if (gerenteViewModel.mensaje.value.isNotEmpty()) {
 
             Text(
@@ -119,7 +112,7 @@ fun GerenteScreen(
 
         when (seccionActual) {
 
-            // MENU PRINCIPAL
+            // PANEL PRINCIPAL
             "INICIO" -> {
 
                 Text(
@@ -128,7 +121,6 @@ fun GerenteScreen(
                 )
 
                 Text("Bienvenido, $nombreGerente")
-
                 Text("Productos registrados: ${productos.size}")
                 Text("Pedidos pendientes: $pendientes")
                 Text("Productos con stock bajo: $bajoStock")
@@ -190,7 +182,6 @@ fun GerenteScreen(
                     style = MaterialTheme.typography.titleLarge
                 )
 
-                // Abre el formulario para crear productos
                 Button(
                     onClick = {
                         productoEditando = null
@@ -206,7 +197,6 @@ fun GerenteScreen(
                     Text("No hay productos registrados.")
                 }
 
-                // Muestra los productos existentes
                 for (producto in productos) {
 
                     Card(
@@ -215,19 +205,21 @@ fun GerenteScreen(
 
                         Column(
                             modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement =
+                                Arrangement.spacedBy(8.dp)
                         ) {
 
                             Text(
                                 text = producto.nombre,
-                                style = MaterialTheme.typography.titleMedium
+                                style =
+                                    MaterialTheme.typography.titleMedium
                             )
 
                             Text("Categoria: ${producto.categoria}")
                             Text("Precio: $${producto.precio}")
                             Text("Stock: ${producto.stock}")
 
-                            // Control rapido del stock
+                            // Control rapido de inventario.
                             Row(
                                 horizontalArrangement =
                                     Arrangement.spacedBy(8.dp)
@@ -240,7 +232,8 @@ fun GerenteScreen(
                                             -1
                                         )
                                     },
-                                    enabled = producto.stock > 0 && !ocupado
+                                    enabled =
+                                        producto.stock > 0 && !ocupado
                                 ) {
                                     Text("-1")
                                 }
@@ -258,7 +251,6 @@ fun GerenteScreen(
                                 }
                             }
 
-                            // Abre el formulario con los datos actuales
                             Button(
                                 onClick = {
                                     productoEditando = producto
@@ -274,7 +266,7 @@ fun GerenteScreen(
                 }
             }
 
-            // FORMULARIO PARA CREAR O EDITAR PRODUCTOS
+            // CREAR O EDITAR PRODUCTOS
             "FORMULARIO" -> {
 
                 FormularioProductoGerente(
@@ -282,7 +274,8 @@ fun GerenteScreen(
                     guardando = ocupado,
 
                     onGuardar = {
-                            nombre, precio, categoria, descripcion, stock ->
+                            nombre, precio, categoria,
+                            descripcion, stock ->
 
                         gerenteViewModel.guardarProducto(
                             productoOriginal = productoEditando,
@@ -325,7 +318,6 @@ fun GerenteScreen(
                     Text("No existen pedidos registrados.")
                 }
 
-                // Muestra los pedidos de los compradores
                 for (pedido in pedidos) {
 
                     Card(
@@ -334,18 +326,67 @@ fun GerenteScreen(
 
                         Column(
                             modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement =
+                                Arrangement.spacedBy(8.dp)
                         ) {
 
                             Text(
                                 text = "Pedido: ${pedido.numero}",
-                                style = MaterialTheme.typography.titleMedium
+                                style =
+                                    MaterialTheme.typography.titleMedium
                             )
 
-                            Text("Total: $${pedido.total}")
-                            Text("Estado: ${pedido.estado}")
+                            // Permite reconocer el comprador.
+                            Text(
+                                text = if (
+                                    pedido.usuarioEmail.isBlank()
+                                ) {
+                                    "Comprador: pedido antiguo " +
+                                            "sin propietario identificado"
+                                } else {
+                                    "Comprador: ${pedido.usuarioEmail}"
+                                }
+                            )
 
-                            // Consulta los productos del pedido
+                            if (
+                                pedido.tipoEntrega == "Domicilio" &&
+                                pedido.costoDespacho == null
+                            ) {
+
+                                Text(
+                                    "Total productos: $${pedido.total}"
+                                )
+
+                                Text(
+                                    "Costo despacho: por confirmar"
+                                )
+
+                            } else {
+
+                                Text("Total: $${pedido.total}")
+                            }
+
+                            Text(
+                                text = "Estado: ${pedido.estado}",
+                                style =
+                                    MaterialTheme.typography.titleMedium,
+                                color = CafePrincipal
+                            )
+
+                            Text("Entrega: ${pedido.tipoEntrega}")
+
+                            if (pedido.tipoEntrega == "Domicilio") {
+
+                                Text(
+                                    "Direccion: ${pedido.direccion}"
+                                )
+                            }
+
+                            Text(
+                                "Metodo de pago: ${pedido.metodoPago}"
+                            )
+
+                            // Muestra los productos del pedido.
                             OutlinedButton(
                                 onClick = {
                                     gerenteViewModel.mostrarDetalles(
@@ -356,7 +397,6 @@ fun GerenteScreen(
                                 Text("Ver / ocultar detalle")
                             }
 
-                            // Muestra detalles del pedido seleccionado
                             if (
                                 gerenteViewModel.idDetalleAbierto.value ==
                                 pedido.id
@@ -376,23 +416,24 @@ fun GerenteScreen(
                                     ) {
 
                                         Text(
-                                            text = detalle.nombre +
-                                                    " x${detalle.cantidad}"
+                                            "${detalle.nombre} " +
+                                                    "x${detalle.cantidad}"
                                         )
 
                                         Text(
-                                            text = "Subtotal: " +
+                                            "Subtotal: " +
                                                     "$${detalle.precio * detalle.cantidad}"
                                         )
                                     }
                                 }
                             }
 
-                            // Permite cambiar el estado del pedido
+                            // Permite avanzar hasta la entrega final.
                             if (
                                 pedido.estado == "Confirmado" ||
                                 pedido.estado == "Preparando" ||
-                                pedido.estado == "Listo"
+                                pedido.estado == "Listo" ||
+                                pedido.estado == "En despacho"
                             ) {
 
                                 Button(
@@ -403,6 +444,7 @@ fun GerenteScreen(
                                     },
                                     enabled = !ocupado
                                 ) {
+
                                     Text("Avanzar estado")
                                 }
                             }
@@ -411,7 +453,7 @@ fun GerenteScreen(
                 }
             }
 
-            // REPORTES Y ESTADISTICAS
+            // REPORTES
             "REPORTES" -> {
 
                 Text(
@@ -425,13 +467,14 @@ fun GerenteScreen(
                 Text("Pedidos pendientes: $pendientes")
 
                 Text(
-                    text = "Monto total de pedidos: $$montoPedidos"
+                    text = "Monto de pedidos registrados: " +
+                            "$$montoPedidos"
                 )
 
-                // El monto no representa pagos bancarios reales
                 Text(
-                    text = "Este monto corresponde a pedidos " +
-                            "registrados, no a pagos realizados."
+                    text = "Los montos registrados no representan " +
+                            "pagos bancarios realizados. Algunos " +
+                            "despachos pueden tener una tarifa pendiente."
                 )
 
                 Button(
@@ -446,7 +489,7 @@ fun GerenteScreen(
     }
 }
 
-// Formulario reutilizable para productos
+// Formulario para crear y editar productos.
 @Composable
 fun FormularioProductoGerente(
     producto: ProductoEntity?,
@@ -461,7 +504,6 @@ fun FormularioProductoGerente(
     onCancelar: () -> Unit
 ) {
 
-    // Recupera los datos al editar un producto
     var nombre by remember(producto?.id) {
         mutableStateOf(producto?.nombre ?: "")
     }
@@ -495,55 +537,69 @@ fun FormularioProductoGerente(
             style = MaterialTheme.typography.titleLarge
         )
 
-        // Nombre del producto
         OutlinedTextField(
             value = nombre,
-            onValueChange = { nombre = it },
-            label = { Text("Nombre") },
+            onValueChange = {
+                nombre = it
+            },
+            label = {
+                Text("Nombre")
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
 
-        // Precio en pesos chilenos
         OutlinedTextField(
             value = precio,
-            onValueChange = { precio = it },
-            label = { Text("Precio CLP") },
+            onValueChange = {
+                precio = it
+            },
+            label = {
+                Text("Precio CLP")
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
 
-        // Se utilizan las categorias actuales del catalogo
         Text(
             "Categorias: Abarrotes, Bebidas, Higiene, Lacteos"
         )
 
         OutlinedTextField(
             value = categoria,
-            onValueChange = { categoria = it },
-            label = { Text("Categoria") },
+            onValueChange = {
+                categoria = it
+            },
+            label = {
+                Text("Categoria")
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
 
-        // Descripcion del producto
         OutlinedTextField(
             value = descripcion,
-            onValueChange = { descripcion = it },
-            label = { Text("Descripcion") },
+            onValueChange = {
+                descripcion = it
+            },
+            label = {
+                Text("Descripcion")
+            },
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Stock inicial o actualizado
         OutlinedTextField(
             value = stock,
-            onValueChange = { stock = it },
-            label = { Text("Stock") },
+            onValueChange = {
+                stock = it
+            },
+            label = {
+                Text("Stock")
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
 
-        // Guarda los datos validados por el ViewModel
         Button(
             onClick = {
                 onGuardar(
@@ -557,8 +613,13 @@ fun FormularioProductoGerente(
             enabled = !guardando,
             modifier = Modifier.fillMaxWidth()
         ) {
+
             Text(
-                if (guardando) "Guardando..." else "Guardar producto"
+                if (guardando) {
+                    "Guardando..."
+                } else {
+                    "Guardar producto"
+                }
             )
         }
 

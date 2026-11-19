@@ -35,7 +35,6 @@ fun EntregaPagoScreen(
     onVolverCarrito: () -> Unit
 ) {
 
-    // Opciones seleccionadas por el comprador
     var tipoEntrega by remember {
         mutableStateOf("Retiro en tienda")
     }
@@ -48,12 +47,18 @@ fun EntregaPagoScreen(
         mutableStateOf("")
     }
 
-    // Para despacho, la direccion debe tener al menos 8 caracteres
+    // Solo requiere direccion para pedidos a domicilio.
     val direccionValida =
         tipoEntrega != "Domicilio" ||
                 direccion.trim().length >= 8
 
-    // Evita confirmar una compra sin datos validos
+    // Obtiene el costo configurado para el despacho.
+    val costoDespacho = if (tipoEntrega == "Domicilio") {
+        ConfiguracionEntrega.COSTO_DESPACHO
+    } else {
+        0
+    }
+
     val puedeConfirmar =
         total > 0 &&
                 direccionValida &&
@@ -75,13 +80,30 @@ fun EntregaPagoScreen(
                 style = MaterialTheme.typography.headlineMedium
             )
 
-            // Muestra el total antes de confirmar
-            Text(
-                text = "Total del pedido: $$total",
-                style = MaterialTheme.typography.titleMedium
-            )
+            // Resumen de costos.
+            Text("Subtotal productos: $$total")
 
-            // Opciones de entrega
+            if (costoDespacho == null) {
+
+                Text("Costo de despacho: por confirmar")
+
+                Text(
+                    text = "Total final pendiente de confirmar",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+            } else {
+
+                Text("Costo de despacho: $$costoDespacho")
+
+                Text(
+                    text = "Total: $${total + costoDespacho}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = "Tipo de entrega",
                 style = MaterialTheme.typography.titleMedium
@@ -115,8 +137,28 @@ fun EntregaPagoScreen(
                 )
             }
 
-            // Pide direccion solamente si es despacho
+            // Informacion para los pedidos con despacho.
             if (tipoEntrega == "Domicilio") {
+
+                Text(
+                    text = "Importante: los despachos a domicilio " +
+                            "se realizan " +
+                            "${ConfiguracionEntrega.DESPACHOS_POR_SEMANA} " +
+                            "veces por semana."
+                )
+
+                Text(
+                    text = "La fecha de entrega sera informada " +
+                            "cuando se coordine el despacho.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                Text(
+                    text = "Mas adelante informaremos los cambios " +
+                            "de estado por correo electronico, cuando " +
+                            "ese servicio este habilitado.",
+                    style = MaterialTheme.typography.bodySmall
+                )
 
                 OutlinedTextField(
                     value = direccion,
@@ -132,19 +174,21 @@ fun EntregaPagoScreen(
                 )
 
                 if (!direccionValida) {
+
                     Text(
-                        text = "Ingresa una direccion de al menos 8 caracteres.",
+                        text = "Ingresa una direccion de al " +
+                                "menos 8 caracteres.",
                         color = MaterialTheme.colorScheme.error
                     )
                 }
 
             } else {
+
                 Text("El pedido sera retirado en el local.")
             }
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Opciones del metodo de pago
             Text(
                 text = "Metodo de pago",
                 style = MaterialTheme.typography.titleMedium
@@ -178,22 +222,46 @@ fun EntregaPagoScreen(
                 )
             }
 
-            Text(
-                text = "El pago se realiza al retirar o recibir el pedido.",
-                style = MaterialTheme.typography.bodySmall
-            )
+            if (metodoPago == "Tarjeta") {
 
-            // Muestra un error si falla el guardado
+                Text(
+                    text = "El pago con tarjeta todavia no esta " +
+                            "integrado. Se registrara el metodo " +
+                            "seleccionado, pero no se realizara un cobro.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                if (tipoEntrega == "Domicilio") {
+
+                    Text(
+                        text = "Cuando se implemente el pago, " +
+                                "el monto debera incluir los productos " +
+                                "y la tarifa de despacho confirmada.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+            } else {
+
+                Text(
+                    text = "El pago en efectivo se coordinara " +
+                            "al retirar o recibir el pedido.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            // Mensaje de error del ViewModel.
             if (errorPedido.isNotEmpty()) {
+
                 Text(
                     text = errorPedido,
                     color = MaterialTheme.colorScheme.error
                 )
             }
 
-            // Confirma solamente cuando los datos son validos
             Button(
                 onClick = {
+
                     onConfirmarPedido(
                         tipoEntrega,
                         metodoPago,
@@ -207,6 +275,7 @@ fun EntregaPagoScreen(
                 enabled = puedeConfirmar,
                 modifier = Modifier.fillMaxWidth()
             ) {
+
                 Text(
                     if (guardandoPedido) {
                         "Guardando..."
@@ -216,7 +285,6 @@ fun EntregaPagoScreen(
                 )
             }
 
-            // Regresa al carrito sin eliminar los productos
             TextButton(
                 onClick = onVolverCarrito,
                 enabled = !guardandoPedido,

@@ -15,10 +15,10 @@ import com.example.cocoa_market_spa.ui.auth.RegisterScreen
 @Composable
 fun AppNavigation() {
 
-    // Controla la navegacion general
+    // Navegacion general de la aplicacion.
     val navController = rememberNavController()
 
-    // Mantiene la autenticacion existente en SQLite
+    // Autenticacion local mediante Room.
     val authViewModel: AuthViewModel = viewModel()
 
     NavHost(
@@ -34,7 +34,6 @@ fun AppNavigation() {
 
                 onLoginSuccess = {
 
-                    // Abre la pantalla segun el rol
                     val destino = if (
                         authViewModel.rolUsuario.value == "GERENTE"
                     ) {
@@ -45,7 +44,6 @@ fun AppNavigation() {
 
                     navController.navigate(destino) {
 
-                        // Elimina el login anterior
                         popUpTo("login") {
                             inclusive = true
                         }
@@ -55,13 +53,14 @@ fun AppNavigation() {
                 },
 
                 onNavigateToRegister = {
+
                     authViewModel.clearError()
                     navController.navigate("register")
                 }
             )
         }
 
-        // REGISTRO DE USUARIOS
+        // REGISTRO EXCLUSIVO DE COMPRADORES
         composable("register") {
 
             RegisterScreen(
@@ -69,8 +68,8 @@ fun AppNavigation() {
 
                 onRegistered = {
 
-                    // Regresa al login despues del registro
                     navController.navigate("login") {
+
                         popUpTo("register") {
                             inclusive = true
                         }
@@ -78,6 +77,7 @@ fun AppNavigation() {
                 },
 
                 onNavigateToLogin = {
+
                     authViewModel.clearError()
                     navController.popBackStack()
                 }
@@ -88,15 +88,17 @@ fun AppNavigation() {
         composable("home") {
 
             CatalogoNavigation(
-                nombreUsuario = authViewModel.nombreUsuario.value,
+                nombreUsuario =
+                    authViewModel.nombreUsuario.value,
 
-                // NUEVO: permite cerrar sesion como cliente
+                // Identifica al propietario de los pedidos.
+                correoUsuario =
+                    authViewModel.correoUsuario.value,
+
                 onCerrarSesion = {
 
-                    authViewModel.clearError()
+                    authViewModel.cerrarSesion()
 
-                    // Regresa al login y elimina las pantallas
-                    // anteriores del comprador
                     navController.navigate("login") {
 
                         popUpTo("home") {
@@ -113,13 +115,13 @@ fun AppNavigation() {
         composable("gerente") {
 
             GerenteScreen(
-                nombreGerente = authViewModel.nombreUsuario.value,
+                nombreGerente =
+                    authViewModel.nombreUsuario.value,
 
                 onCerrarSesion = {
 
-                    authViewModel.clearError()
+                    authViewModel.cerrarSesion()
 
-                    // Mantiene el cierre de sesion del gerente
                     navController.navigate("login") {
 
                         popUpTo("gerente") {

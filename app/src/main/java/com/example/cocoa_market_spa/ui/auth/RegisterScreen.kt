@@ -3,14 +3,12 @@ package com.example.cocoa_market_spa.ui.auth
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -33,7 +31,7 @@ fun RegisterScreen(
     onNavigateToLogin: () -> Unit
 ) {
 
-    // Datos del formulario
+    // Datos del formulario del comprador
     var name by remember {
         mutableStateOf("")
     }
@@ -44,11 +42,6 @@ fun RegisterScreen(
 
     var password by remember {
         mutableStateOf("")
-    }
-
-    // Permite crear el gerente inicial si aun no existe
-    var crearGerente by remember {
-        mutableStateOf(false)
     }
 
     val error by viewModel.errorMessage.collectAsState()
@@ -73,7 +66,7 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Nombre del usuario
+        // Nombre del comprador
         OutlinedTextField(
             value = name,
             onValueChange = {
@@ -105,7 +98,7 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Contraseña de la cuenta
+        // Contrasena de la cuenta
         OutlinedTextField(
             value = password,
             onValueChange = {
@@ -120,36 +113,6 @@ fun RegisterScreen(
             singleLine = true
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Configuracion inicial del gerente
-        // Solo aparece si no hay gerente registrado
-        if (viewModel.puedeCrearGerente.value) {
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-
-                Checkbox(
-                    checked = crearGerente,
-                    onCheckedChange = {
-                        crearGerente = it
-                    }
-                )
-
-                Text(
-                    text = "Crear primera cuenta de gerente"
-                )
-            }
-
-            Text(
-                text = "Solo para la configuracion inicial " +
-                        "de este dispositivo.",
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-
         // Mensajes de validacion
         if (error != null) {
 
@@ -163,38 +126,19 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Registra el usuario en SQLite
+        // Solo registra compradores en SQLite
         Button(
             onClick = {
-
-                val rolSeleccionado = if (
-                    crearGerente &&
-                    viewModel.puedeCrearGerente.value
-                ) {
-                    "GERENTE"
-                } else {
-                    "CLIENTE"
-                }
-
                 viewModel.register(
                     name = name,
                     email = email,
                     pass = password,
-                    onSuccess = onRegistered,
-                    rol = rolSeleccionado
+                    onSuccess = onRegistered
                 )
             },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !viewModel.registrando.value
+            modifier = Modifier.fillMaxWidth()
         ) {
-
-            Text(
-                if (viewModel.registrando.value) {
-                    "Registrando..."
-                } else {
-                    "Registrar cuenta"
-                }
-            )
+            Text("Registrar cuenta")
         }
 
         Spacer(modifier = Modifier.height(8.dp))

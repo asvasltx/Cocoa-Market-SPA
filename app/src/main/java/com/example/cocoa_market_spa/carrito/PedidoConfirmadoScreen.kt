@@ -25,6 +25,7 @@ fun PedidoConfirmadoScreen(
     tipoEntrega: String,
     metodoPago: String,
     direccion: String,
+    costoDespacho: Int?,
     onVerPedidos: () -> Unit,
     onVolverCatalogo: () -> Unit
 ) {
@@ -51,13 +52,13 @@ fun PedidoConfirmadoScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Resumen del pedido registrado
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
 
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
 
                     Text(
@@ -65,9 +66,22 @@ fun PedidoConfirmadoScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    if (tipoEntrega == "Domicilio" &&
+                        costoDespacho == null
+                    ) {
 
-                    Text("Total: $$total")
+                        Text("Total productos: $$total")
+                        Text("Despacho: por confirmar")
+                        Text("Total final: pendiente")
+
+                    } else {
+
+                        val subtotal = total - (costoDespacho ?: 0)
+
+                        Text("Productos: $$subtotal")
+                        Text("Despacho: $${costoDespacho ?: 0}")
+                        Text("Total: $$total")
+                    }
 
                     Text("Estado: Confirmado")
 
@@ -79,7 +93,10 @@ fun PedidoConfirmadoScreen(
 
                     Text("Metodo de pago: $metodoPago")
 
-                    Text("Pago pendiente al retirar o recibir el pedido")
+                    Text(
+                        text = "El pago todavia no se ha realizado.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
 

@@ -18,20 +18,23 @@ import com.example.cocoa_market_spa.viewmodel.CarritoViewModel
 import com.example.cocoa_market_spa.viewmodel.PedidoViewModel
 
 // Navegacion alternativa del carrito.
-// La navegacion principal actual es CatalogoNavigation.
+// La navegacion principal es CatalogoNavigation.
 @Composable
-fun CarritoNavigation() {
+fun CarritoNavigation(
+    usuarioEmail: String
+) {
 
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    // Acceso a la base de datos actual
+    // Acceso a la base de datos local
     val database = remember {
         AppDatabase.getDatabase(context)
     }
 
     val carritoViewModel: CarritoViewModel = viewModel()
 
+    // Ahora identifica al comprador mediante su correo
     val pedidoViewModel: PedidoViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
 
@@ -40,7 +43,10 @@ fun CarritoNavigation() {
             ): T {
 
                 @Suppress("UNCHECKED_CAST")
-                return PedidoViewModel(database) as T
+                return PedidoViewModel(
+                    database,
+                    usuarioEmail
+                ) as T
             }
         }
     )
@@ -62,24 +68,33 @@ fun CarritoNavigation() {
         mutableStateOf("")
     }
 
+    // Guarda el costo del despacho para la confirmacion
+    var costoDespachoPedido by remember {
+        mutableStateOf<Int?>(0)
+    }
+
     NavHost(
         navController = navController,
         startDestination = "carrito"
     ) {
 
+        // CARRITO
         composable("carrito") {
 
             CarritoScreen(
                 onNavigateToPedidos = {
                     navController.navigate("entrega_pago")
                 },
+
                 onVolverCatalogo = {
                     navController.popBackStack()
                 },
+
                 carritoViewModel = carritoViewModel
             )
         }
 
+        // ENTREGA Y PAGO
         composable("entrega_pago") {
 
             EntregaPagoScreen(
@@ -100,12 +115,24 @@ fun CarritoNavigation() {
 
                         onGuardado = {
 
-                            totalPedido = total
+                            // Guarda los datos de la compra
                             tipoEntregaPedido = entrega
                             metodoPagoPedido = pago
                             direccionPedido = direccion
 
-                            // Solo limpia despues de guardar
+                            // Consulta el costo de despacho configurado
+                            costoDespachoPedido =
+                                if (entrega == "Domicilio") {
+                                    ConfiguracionEntrega.COSTO_DESPACHO
+                                } else {
+                                    0
+                                }
+
+                            // Suma el despacho solo si tiene precio
+                            totalPedido =
+                                total + (costoDespachoPedido ?: 0)
+
+                            // Vacia el carrito solamente al guardar
                             carritoViewModel.vaciarCarrito()
 
                             navController.navigate("pedido_confirmado") {
@@ -123,6 +150,7 @@ fun CarritoNavigation() {
             )
         }
 
+        // CONFIRMACION DEL PEDIDO
         composable("pedido_confirmado") {
 
             PedidoConfirmadoScreen(
@@ -130,6 +158,9 @@ fun CarritoNavigation() {
                 tipoEntrega = tipoEntregaPedido,
                 metodoPago = metodoPagoPedido,
                 direccion = direccionPedido,
+
+                // Parametro que faltaba anteriormente
+                costoDespacho = costoDespachoPedido,
 
                 onVerPedidos = {
                     navController.navigate("pedidos")
@@ -141,12 +172,14 @@ fun CarritoNavigation() {
             )
         }
 
+        // HISTORIAL DE PEDIDOS
         composable("pedidos") {
 
             PedidoScreen(
                 onVolvercarrito = {
                     navController.navigate("carrito")
                 },
+
                 pedidoViewModel = pedidoViewModel
             )
         }

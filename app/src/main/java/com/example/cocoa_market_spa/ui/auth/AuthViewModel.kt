@@ -11,46 +11,75 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class AuthViewModel(application: Application) : AndroidViewModel(application) {
+class AuthViewModel(application: Application) :
+    AndroidViewModel(application) {
 
     var nombreUsuario = mutableStateOf("")
         private set
 
-    // Guarda el rol del usuario que inicio sesion
+    // Correo del usuario que inicio sesion.
+    var correoUsuario = mutableStateOf("")
+        private set
+
+    // Rol utilizado para navegar a la pantalla correcta.
     var rolUsuario = mutableStateOf("CLIENTE")
         private set
 
-    private val userDao = AppDatabase.getDatabase(application).UserDao()
+    private val userDao =
+        AppDatabase.getDatabase(application).UserDao()
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
+    private val _errorMessage =
+        MutableStateFlow<String?>(null)
+
     val errorMessage = _errorMessage.asStateFlow()
 
-    fun register(name: String, email: String, pass: String, onSuccess: () -> Unit) {
-        if (name.isBlank() || email.isBlank() || pass.isBlank()) {
-            _errorMessage.value = "Por favor completa todos los campos"
+    // Solamente registra compradores.
+    fun register(
+        name: String,
+        email: String,
+        pass: String,
+        onSuccess: () -> Unit
+    ) {
+
+        if (name.isBlank() ||
+            email.isBlank() ||
+            pass.isBlank()
+        ) {
+            _errorMessage.value =
+                "Por favor completa todos los campos"
             return
         }
 
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            _errorMessage.value = "Ingresa un correo electrónico válido"
+        if (!android.util.Patterns.EMAIL_ADDRESS
+                .matcher(email.trim()).matches()
+        ) {
+            _errorMessage.value =
+                "Ingresa un correo electrónico válido"
             return
         }
 
         if (pass.length < 4) {
-            _errorMessage.value = "La contraseña debe tener al menos 4 caracteres"
+            _errorMessage.value =
+                "La contraseña debe tener al menos 4 caracteres"
             return
         }
 
         viewModelScope.launch {
-            val existing = userDao.getUserByEmail(email)
+
+            val correo = email.trim()
+            val existing = userDao.getUserByEmail(correo)
 
             if (existing != null) {
-                _errorMessage.value = "Este correo ya está registrado"
+
+                _errorMessage.value =
+                    "Este correo ya está registrado"
+
             } else {
+
                 userDao.registerUser(
                     User(
-                        nombre = name,
-                        email = email,
+                        nombre = name.trim(),
+                        email = correo,
                         password = pass
                     )
                 )
@@ -61,27 +90,51 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun login(email: String, pass: String, onSuccess: () -> Unit) {
+    // Inicia sesion con un usuario existente en SQLite.
+    fun login(
+        email: String,
+        pass: String,
+        onSuccess: () -> Unit
+    ) {
+
         if (email.isBlank() || pass.isBlank()) {
-            _errorMessage.value = "Ingresa tu correo y contraseña"
+            _errorMessage.value =
+                "Ingresa tu correo y contraseña"
             return
         }
 
         viewModelScope.launch {
-            val user = userDao.login(email, pass)
+
+            val user = userDao.login(
+                email.trim(),
+                pass
+            )
 
             if (user != null) {
-                nombreUsuario.value = user.nombre
 
-                // Guarda si el usuario es CLIENTE o GERENTE
+                nombreUsuario.value = user.nombre
+                correoUsuario.value = user.email
                 rolUsuario.value = user.rol
 
                 _errorMessage.value = null
                 onSuccess()
+
             } else {
-                _errorMessage.value = "Correo o contraseña incorrectos"
+
+                _errorMessage.value =
+                    "Correo o contraseña incorrectos"
             }
         }
+    }
+
+    // Limpia los datos del usuario al cerrar sesion.
+    fun cerrarSesion() {
+
+        nombreUsuario.value = ""
+        correoUsuario.value = ""
+        rolUsuario.value = "CLIENTE"
+
+        clearError()
     }
 
     fun clearError() {
