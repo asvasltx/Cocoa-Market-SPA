@@ -3,10 +3,10 @@ package com.example.cocoa_market_spa.gerente
 
 import android.app.Application
 import android.content.Context
-import android.media.RingtoneManager
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,23 +21,18 @@ import kotlinx.coroutines.launch
 class GerenteViewModel(application: Application) :
     AndroidViewModel(application) {
 
-    // Base de datos utilizada temporalmente.
-    private val database =
-        AppDatabase.getDatabase(application)
-
+    // Base de datos temporal para productos y pedidos.
+    private val database = AppDatabase.getDatabase(application)
     private val productoDao = database.ProductoDao()
     private val pedidoDao = database.PedidoDao()
 
-    var productos =
-        mutableStateOf<List<ProductoEntity>>(emptyList())
+    var productos = mutableStateOf<List<ProductoEntity>>(emptyList())
         private set
 
-    var pedidos =
-        mutableStateOf<List<PedidoEntity>>(emptyList())
+    var pedidos = mutableStateOf<List<PedidoEntity>>(emptyList())
         private set
 
-    var detallesPedido =
-        mutableStateOf<List<DetallePedidoEntity>>(emptyList())
+    var detallesPedido = mutableStateOf<List<DetallePedidoEntity>>(emptyList())
         private set
 
     var idDetalleAbierto = mutableStateOf<Int?>(null)
@@ -54,11 +49,8 @@ class GerenteViewModel(application: Application) :
 
     // Recupera productos y pedidos desde Room.
     fun cargarDatos() {
-
         viewModelScope.launch {
-
             try {
-
                 productos.value = productoDao.obtenerProductos()
 
                 val lista = pedidoDao.obtenerPedidos()
@@ -67,9 +59,7 @@ class GerenteViewModel(application: Application) :
                 avisarPedidosNuevos(lista)
 
             } catch (e: Exception) {
-
-                mensaje.value =
-                    "No se pudieron cargar los datos."
+                mensaje.value = "No se pudieron cargar los datos."
             }
         }
     }
@@ -78,7 +68,6 @@ class GerenteViewModel(application: Application) :
     private fun avisarPedidosNuevos(
         listaPedidos: List<PedidoEntity>
     ) {
-
         val context = getApplication<Application>()
 
         val preferencias = context.getSharedPreferences(
@@ -102,7 +91,6 @@ class GerenteViewModel(application: Application) :
         }
 
         if (nuevos > 0) {
-
             val enviado = Notificaciones.mostrar(
                 context = context,
                 titulo = "Nuevos pedidos Cocoa Market",
@@ -117,14 +105,12 @@ class GerenteViewModel(application: Application) :
             .apply()
     }
 
-    // Notifica cuando quedan pocas unidades.
+    // Muestra una alerta cuando el stock es bajo.
     private fun avisarStockBajo(
         nombre: String,
         stock: Int
     ) {
-
         if (stock <= 5) {
-
             Notificaciones.mostrar(
                 context = getApplication(),
                 titulo = "Alerta de inventario",
@@ -133,7 +119,7 @@ class GerenteViewModel(application: Application) :
         }
     }
 
-    // Guarda un producto nuevo o modifica uno existente.
+    // Crea o edita un producto.
     fun guardarProducto(
         productoOriginal: ProductoEntity?,
         nombre: String,
@@ -143,7 +129,6 @@ class GerenteViewModel(application: Application) :
         stockTexto: String,
         onGuardado: () -> Unit
     ) {
-
         if (operacionEnCurso.value) return
 
         val nombreLimpio = nombre.trim()
@@ -186,10 +171,8 @@ class GerenteViewModel(application: Application) :
         mensaje.value = ""
 
         viewModelScope.launch {
-
             try {
-
-                // Evita productos duplicados.
+                // Evita productos con el mismo nombre.
                 val existe = productoDao.obtenerProductos().any {
                     it.nombre.equals(
                         nombreLimpio,
@@ -199,14 +182,13 @@ class GerenteViewModel(application: Application) :
                 }
 
                 if (existe) {
-
                     mensaje.value =
                         "Ya existe un producto con ese nombre."
                     return@launch
                 }
 
                 if (productoOriginal == null) {
-
+                    // Crea un nuevo producto.
                     productoDao.insertarProducto(
                         ProductoEntity(
                             nombre = nombreLimpio,
@@ -214,13 +196,12 @@ class GerenteViewModel(application: Application) :
                             categoria = categoriaLimpia,
                             descripcion = descripcionLimpia,
                             stock = stock,
-                            imagen =
-                                R.drawable.ic_launcher_foreground
+                            imagen = R.drawable.ic_launcher_foreground
                         )
                     )
 
                 } else {
-
+                    // Modifica el producto existente.
                     productoDao.actualizarProducto(
                         productoOriginal.copy(
                             nombre = nombreLimpio,
@@ -234,42 +215,36 @@ class GerenteViewModel(application: Application) :
 
                 productos.value = productoDao.obtenerProductos()
 
-                mensaje.value =
-                    "Producto guardado correctamente."
+                mensaje.value = "Producto guardado correctamente."
 
+                // Solo vibracion, sin sonido.
                 confirmarCambioNativo()
+
                 avisarStockBajo(nombreLimpio, stock)
 
                 onGuardado()
 
             } catch (e: Exception) {
-
-                mensaje.value =
-                    "No se pudo guardar el producto."
+                mensaje.value = "No se pudo guardar el producto."
 
             } finally {
-
                 operacionEnCurso.value = false
             }
         }
     }
 
-    // Modifica una unidad del inventario.
+    // Aumenta o disminuye una unidad del inventario.
     fun modificarStock(
         producto: ProductoEntity,
         cambio: Int
     ) {
-
         if (operacionEnCurso.value) return
-
         if (cambio != 1 && cambio != -1) return
 
         operacionEnCurso.value = true
 
         viewModelScope.launch {
-
             try {
-
                 val resultado = productoDao.cambiarStock(
                     producto.id,
                     cambio
@@ -279,7 +254,16 @@ class GerenteViewModel(application: Application) :
 
                 if (resultado == 1) {
 
-                    mensaje.value = "Stock actualizado."
+                    // Muestra el mensaje solo cuando se guardo.
+                    mensaje.value = ""
+
+                    Toast.makeText(
+                        getApplication<Application>(),
+                        "Stock modificado con éxito",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    // Vibracion breve sin sonido.
                     confirmarCambioNativo()
 
                     val actualizado = productos.value.find {
@@ -294,28 +278,22 @@ class GerenteViewModel(application: Application) :
                     }
 
                 } else {
-
-                    mensaje.value =
-                        "No se pudo modificar el stock."
+                    mensaje.value = "No se pudo modificar el stock."
                 }
 
             } catch (e: Exception) {
-
-                mensaje.value =
-                    "Error al actualizar el inventario."
+                mensaje.value = "Error al actualizar el inventario."
 
             } finally {
-
                 operacionEnCurso.value = false
             }
         }
     }
 
-    // Abre o cierra los productos de un pedido.
+    // Abre o cierra los detalles de un pedido.
     fun mostrarDetalles(pedidoId: Int) {
 
         if (idDetalleAbierto.value == pedidoId) {
-
             idDetalleAbierto.value = null
             detallesPedido.value = emptyList()
             return
@@ -326,23 +304,17 @@ class GerenteViewModel(application: Application) :
         cargandoDetalles.value = true
 
         viewModelScope.launch {
-
             try {
-
-                val detalles =
-                    pedidoDao.obtenerDetalles(pedidoId)
+                val detalles = pedidoDao.obtenerDetalles(pedidoId)
 
                 if (idDetalleAbierto.value == pedidoId) {
                     detallesPedido.value = detalles
                 }
 
             } catch (e: Exception) {
-
-                mensaje.value =
-                    "No se pudo cargar el detalle."
+                mensaje.value = "No se pudo cargar el detalle."
 
             } finally {
-
                 if (idDetalleAbierto.value == pedidoId) {
                     cargandoDetalles.value = false
                 }
@@ -350,7 +322,7 @@ class GerenteViewModel(application: Application) :
         }
     }
 
-    // Avanza el pedido segun su tipo de entrega.
+    // Cambia el estado del pedido segun la entrega.
     fun avanzarPedido(pedido: PedidoEntity) {
 
         if (operacionEnCurso.value) return
@@ -375,18 +347,14 @@ class GerenteViewModel(application: Application) :
         }
 
         if (nuevoEstado == null) {
-
-            mensaje.value =
-                "Este pedido ya no puede avanzar."
+            mensaje.value = "Este pedido ya no puede avanzar."
             return
         }
 
         operacionEnCurso.value = true
 
         viewModelScope.launch {
-
             try {
-
                 val resultado = pedidoDao.actualizarEstado(
                     pedido.id,
                     pedido.estado,
@@ -394,17 +362,15 @@ class GerenteViewModel(application: Application) :
                 )
 
                 if (resultado == 1) {
-
                     pedidos.value = pedidoDao.obtenerPedidos()
 
                     mensaje.value =
                         "Pedido actualizado a $nuevoEstado."
 
+                    // Vibracion sin sonido.
                     confirmarCambioNativo()
 
-                    // Conserva el aviso local de pedido listo.
                     if (nuevoEstado == "Listo") {
-
                         Notificaciones.mostrar(
                             context = getApplication(),
                             titulo = "Pedido listo",
@@ -413,7 +379,6 @@ class GerenteViewModel(application: Application) :
                     }
 
                 } else {
-
                     pedidos.value = pedidoDao.obtenerPedidos()
 
                     mensaje.value =
@@ -421,12 +386,9 @@ class GerenteViewModel(application: Application) :
                 }
 
             } catch (e: Exception) {
-
-                mensaje.value =
-                    "No se pudo actualizar el pedido."
+                mensaje.value = "No se pudo actualizar el pedido."
 
             } finally {
-
                 operacionEnCurso.value = false
             }
         }
@@ -436,26 +398,20 @@ class GerenteViewModel(application: Application) :
         mensaje.value = ""
     }
 
-    // Vibracion y sonido que ya utilizaba la gerencia.
+    // Mantiene vibracion corta
     @Suppress("DEPRECATION")
     private fun confirmarCambioNativo() {
 
         try {
-
             val context = getApplication<Application>()
 
             val vibrador = context.getSystemService(
                 Context.VIBRATOR_SERVICE
             ) as? Vibrator
 
-            if (vibrador != null &&
-                vibrador.hasVibrator()
-            ) {
+            if (vibrador != null && vibrador.hasVibrator()) {
 
-                if (Build.VERSION.SDK_INT >=
-                    Build.VERSION_CODES.O
-                ) {
-
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     vibrador.vibrate(
                         VibrationEffect.createOneShot(
                             100L,
@@ -464,23 +420,12 @@ class GerenteViewModel(application: Application) :
                     )
 
                 } else {
-
                     vibrador.vibrate(100L)
                 }
             }
 
-            val sonido = RingtoneManager.getRingtone(
-                context,
-                RingtoneManager.getDefaultUri(
-                    RingtoneManager.TYPE_NOTIFICATION
-                )
-            )
-
-            sonido?.play()
-
         } catch (e: Exception) {
-
-            // No afecta el cambio ya guardado.
+            // Si falla la vibracion, la operacion sigue funcionando.
         }
     }
 }
