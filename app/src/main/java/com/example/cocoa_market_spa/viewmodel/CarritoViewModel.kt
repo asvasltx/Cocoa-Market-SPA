@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -51,7 +52,6 @@ class CarritoViewModel(application: Application) :
         operacionEnCurso.value = true
 
         viewModelScope.launch {
-
             try {
 
                 // Consulta el producto actualizado
@@ -88,6 +88,13 @@ class CarritoViewModel(application: Application) :
                             "Stock insuficiente. Disponible: " +
                                     "${actual.stock} unidades."
 
+                        // Avisa tambien en la pantalla de detalle
+                        Toast.makeText(
+                            getApplication(),
+                            mensaje.value,
+                            Toast.LENGTH_SHORT
+                        ).show()
+
                     } else {
 
                         if (existente == null) {
@@ -119,10 +126,18 @@ class CarritoViewModel(application: Application) :
                             }
                         }
 
-                        mensaje.value = "Producto agregado al carrito."
+                        // Limpia mensajes anteriores
+                        mensaje.value = ""
 
-                        // Vibra solamente si se agrego correctamente
+                        // Vibra cuando se agrega correctamente
                         vibrarConfirmacion()
+
+                        // Muestra mensaje corto de confirmacion
+                        Toast.makeText(
+                            getApplication(),
+                            "Producto agregado al carrito con éxito",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
 
@@ -146,7 +161,6 @@ class CarritoViewModel(application: Application) :
         operacionEnCurso.value = true
 
         viewModelScope.launch {
-
             try {
 
                 val nuevosStocks = mutableMapOf<Int, Int>()
@@ -210,7 +224,6 @@ class CarritoViewModel(application: Application) :
         operacionEnCurso.value = true
 
         viewModelScope.launch {
-
             try {
 
                 val actual = productoDao.obtenerPorId(
@@ -356,7 +369,6 @@ class CarritoViewModel(application: Application) :
     }
 
     // VIBRACION NATIVA
-    // Basada en la primera implementacion del proyecto
     @SuppressLint("MissingPermission")
     @Suppress("DEPRECATION")
     private fun vibrarConfirmacion() {
