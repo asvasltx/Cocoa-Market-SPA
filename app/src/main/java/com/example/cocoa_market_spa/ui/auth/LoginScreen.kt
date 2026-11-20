@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cocoa_market_spa.R
 
-// COLORES COCOA MARKET
+//colores
 private val Cafe = Color(0xFF603B2D)
 private val Crema = Color(0xFFFCF8F3)
 private val Verde = Color(0xFF64865B)
@@ -92,21 +92,6 @@ fun LoginScreen(
             )
 
 
-            Text(
-                text = "🍃",
-                fontSize = 53.sp,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 65.dp, bottom = 24.dp)
-            )
-
-            Text(
-                text = "🍫",
-                fontSize = 42.sp,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 24.dp, bottom = 14.dp)
-            )
         }
 
 

@@ -58,9 +58,27 @@ class AuthViewModel(application: Application) :
             return
         }
 
-        if (pass.length < 4) {
+        if (pass.length < 8) {
             _errorMessage.value =
-                "La contraseña debe tener al menos 4 caracteres"
+                "La contraseña debe tener al menos 8 caracteres"
+            return
+        }
+
+        if (!pass.any { it.isLetter() }) {
+            _errorMessage.value =
+                "La contraseña debe contener al menos una letra"
+            return
+        }
+
+        if (!pass.any { it.isDigit() }) {
+            _errorMessage.value =
+                "La contraseña debe contener al menos un número"
+            return
+        }
+
+        if (!pass.any { !it.isLetterOrDigit() && !it.isWhitespace() }) {
+            _errorMessage.value =
+                "La contraseña debe contener al menos un símbolo (@, #, !, etc.)"
             return
         }
 
