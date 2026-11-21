@@ -26,6 +26,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cocoa_market_spa.viewmodel.CarritoViewModel
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 
 //colores
 private val Cafe = Color(0xFF603B2D)
@@ -208,6 +211,7 @@ fun CarritoScreen(
                             precio = producto.precio,
                             cantidad = producto.cantidad,
                             stock = stock,
+                            imagen = producto.imagen,
                             enProceso =
                                 carritoViewModel.operacionEnCurso.value,
 
@@ -409,6 +413,7 @@ fun CarritoScreen(
 fun ProductoCarrito(
     producto: String,
     precio: Int,
+    imagen: Int,
     cantidad: Int,
     stock: Int?,
     enProceso: Boolean,
@@ -439,16 +444,19 @@ fun ProductoCarrito(
 
                 Box(
                     modifier = Modifier
-                        .size(66.dp)
+                        .size(76.dp)
                         .background(
                             Crema,
-                            RoundedCornerShape(10.dp)
-                        ),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(6.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "🛒",
-                        fontSize = 27.sp
+                    Image(
+                        painter = painterResource(id = imagen),
+                        contentDescription = producto,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
 
