@@ -31,7 +31,30 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cocoa_market_spa.data.local.entity.ProductoEntity
 import com.example.cocoa_market_spa.ui.theme.CafePrincipal
 import com.example.cocoa_market_spa.ui.theme.CremaFondo
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import java.text.NumberFormat
+import java.util.Locale
 
+private val CafeGerente = Color(0xFF603B2D)
+private val CremaGerente = Color(0xFFFCF8F3)
+private val BeigeGerente = Color(0xFFF3E8E1)
+private val VerdeGerente = Color(0xFF286A43)
+private val GrisGerente = Color(0xFF807A75)
+private val BordeGerente = Color(0xFFE9E2DC)
+
+private fun precioGerente(valor: Number): String {
+    return "$" + NumberFormat.getIntegerInstance(
+        Locale("es", "CL")
+    ).format(valor)
+}
 @Composable
 fun GerenteScreen(
     nombreGerente: String,
@@ -72,22 +95,45 @@ fun GerenteScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(CremaFondo)
+            .background(CremaGerente)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
-        Text(
-            text = "Cocoa Market",
-            style = MaterialTheme.typography.headlineMedium,
-            color = CafePrincipal
-        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = CafeGerente
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(22.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "🍫 COCOA MARKET",
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
 
-        Text(
-            text = "Administracion del minimarket",
-            color = CafePrincipal
-        )
+                Text(
+                    text = "Panel de administración",
+                    color = Color.White,
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "Gestiona tu minimarket desde un solo lugar",
+                    color = Color(0xFFF1DFD5),
+                    fontSize = 12.sp
+                )
+            }
+        }
 
         // Permite volver al panel principal.
         if (seccionActual != "INICIO") {
@@ -116,28 +162,65 @@ fun GerenteScreen(
             "INICIO" -> {
 
                 Text(
-                    text = "Panel del Gerente",
-                    style = MaterialTheme.typography.titleLarge
+                    text = "Hola, $nombreGerente 👋",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = CafeGerente
                 )
 
-                Text("Bienvenido, $nombreGerente")
-                Text("Productos registrados: ${productos.size}")
-                Text("Pedidos pendientes: $pendientes")
-                Text("Productos con stock bajo: $bajoStock")
+                Text(
+                    text = "Resumen de tu negocio",
+                    fontSize = 13.sp,
+                    color = GrisGerente
+                )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                // TARJETA DE PRODUCTOS
+                TarjetaResumenGerente(
+                    titulo = "Productos registrados",
+                    valor = productos.size.toString(),
+                    icono = "📦",
+                    descripcion = "Productos disponibles en inventario"
+                )
+
+                // TARJETA DE PEDIDOS
+                TarjetaResumenGerente(
+                    titulo = "Pedidos pendientes",
+                    valor = pendientes.toString(),
+                    icono = "🧾",
+                    descripcion = "Pedidos que requieren atención"
+                )
+
+                // TARJETA DE STOCK BAJO
+                TarjetaResumenGerente(
+                    titulo = "Productos con stock bajo",
+                    valor = bajoStock.toString(),
+                    icono = "⚠️",
+                    descripcion = "Productos con 5 unidades o menos"
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Administración",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = CafeGerente
+                )
 
                 Button(
                     onClick = {
                         seccionActual = "PRODUCTOS"
                         gerenteViewModel.cargarDatos()
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = CafePrincipal
+                        containerColor = CafeGerente
                     )
                 ) {
-                    Text("Productos e inventario")
+                    Text("📦  Productos e inventario")
                 }
 
                 Button(
@@ -145,12 +228,15 @@ fun GerenteScreen(
                         seccionActual = "PEDIDOS"
                         gerenteViewModel.cargarDatos()
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = CafePrincipal
+                        containerColor = CafeGerente
                     )
                 ) {
-                    Text("Gestion de pedidos")
+                    Text("🧾  Gestión de pedidos")
                 }
 
                 Button(
@@ -158,19 +244,31 @@ fun GerenteScreen(
                         seccionActual = "REPORTES"
                         gerenteViewModel.cargarDatos()
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = CafePrincipal
+                        containerColor = CafeGerente
                     )
                 ) {
-                    Text("Reportes y estadisticas")
+                    Text("📊  Reportes y estadísticas")
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedButton(
                     onClick = onCerrarSesion,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, CafeGerente)
                 ) {
-                    Text("Cerrar sesion")
+                    Text(
+                        text = "Cerrar sesión",
+                        color = CafeGerente
+                    )
                 }
             }
 
@@ -632,3 +730,71 @@ fun FormularioProductoGerente(
         }
     }
 }
+
+
+
+    @Composable
+    private fun TarjetaResumenGerente(
+        titulo: String,
+        valor: String,
+        icono: String,
+        descripcion: String
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            border = BorderStroke(
+                1.dp,
+                BordeGerente
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = BeigeGerente
+                ) {
+                    Text(
+                        text = icono,
+                        fontSize = 25.sp,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = titulo,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = CafeGerente
+                    )
+
+                    Text(
+                        text = descripcion,
+                        fontSize = 11.sp,
+                        color = GrisGerente
+                    )
+                }
+
+                Text(
+                    text = valor,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = VerdeGerente
+                )
+            }
+        }
+    }
+
+
