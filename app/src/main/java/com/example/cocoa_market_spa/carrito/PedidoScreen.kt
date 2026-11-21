@@ -374,10 +374,18 @@ fun TarjetaPedido(
 
                 Column {
                     Text(
-                        text = pedido.numero,
+                        text = pedido.productos.joinToString(", ") {
+                            it.nombre
+                        }.ifBlank { "Pedido" },
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = CafePedidos
+                    )
+
+                    Text(
+                        text = "Pedido N° ${pedido.numero}",
+                        fontSize = 11.sp,
+                        color = GrisPedidos
                     )
 
                     Text(
@@ -387,6 +395,7 @@ fun TarjetaPedido(
                     )
                 }
             }
+
 
             //estado
             Surface(
